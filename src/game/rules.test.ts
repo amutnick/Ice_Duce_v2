@@ -44,6 +44,9 @@ describe('Ice Dice rules engine', () => {
     const next = applyAction(state, { type: 'choosePiece', color: 'emerald', size: 'medium' });
     expect(next.counter[pieceKey('emerald', 'small')]).toBe(0);
     expect(next.bank[pieceKey('emerald', 'small')]).toBe(3);
+    expect(next.currentPlayerIndex).toBe(1);
+    expect(next.turnNumber).toBe(2);
+    expect(next.pendingRoll).toBeNull();
     expect(next.log.at(-1)?.message).toMatch(/busted/i);
   });
 

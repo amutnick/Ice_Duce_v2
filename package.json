@@ -8,7 +8,9 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "vitest run",
-    "serve:lan": "tsx server/server.ts"
+    "serve:lan": "tsx server/server.ts",
+    "launch:mac": "bash scripts/launch-mac.sh",
+    "stop:mac": "bash scripts/stop-mac.sh"
   },
   "dependencies": {
     "react": "^19.0.0",

@@ -21,6 +21,7 @@ import {
   type PlayerCount,
   type Size
 } from './game/rules';
+import { getBackgroundMusicStatus, pauseBackgroundMusic, setBackgroundMusicMuted, setBackgroundMusicVolume, startBackgroundMusic, stopBackgroundMusic, syncBackgroundMusic } from './game/backgroundMusic';
 import { playSound } from './game/sound';
 import { useLanMatch } from './game/useLanMatch';
 import QRCode from 'qrcode';
@@ -54,10 +55,305 @@ interface DraftSelection {
   size: Size;
 }
 
+interface TurnBannerCopy {
+  label: string;
+  title: string;
+  message: string;
+  badge: string;
+  tone: 'neutral' | 'your-turn' | 'waiting' | 'win';
+}
+
+interface RollFeedbackCopy {
+  label: string;
+  title: string;
+  message: string;
+  tone: 'neutral' | 'bust' | 'bonus' | 'safe' | 'win';
+}
+
 type LanMatch = ReturnType<typeof useLanMatch>;
 
 function randomSeed(): number {
   return Math.floor(Math.random() * 0xffffffff) >>> 0;
+}
+
+const TURN_FLAVORS = {
+  yourTurn: [
+    'The table is leaning your way. Try not to jinx it.',
+    'Your move. The pyramids are watching.',
+    'The dice are warm. Make them nervous.'
+  ],
+  waiting: [
+    'Opponent is thinking dangerous thoughts.',
+    'Your rival is still negotiating with the dice.',
+    'The other side is making the table sweat.'
+  ],
+  bust: [
+    'Bust. The dice have turned traitor.',
+    'That run collapsed hard. Turn passed.',
+    'The table rejected that gamble and moved on.'
+  ],
+  bonus: [
+    'Rainbow bonus. The counter is showing off.',
+    'A full-color streak! The turn stays alive.',
+    'Five colors in play. The table has entered dramatic mode.'
+  ],
+  safe: [
+    'Safe cash-out. Respect the discipline.',
+    'A calm exit. Sometimes that is the power move.',
+    'The counter got banked before the floor could wobble.'
+  ],
+  steal: [
+    'Sneaky steal. The bank is getting nervous.',
+    'That piece disappeared from someone else\'s stash.',
+    'A little thievery never hurt a pyramid game.'
+  ],
+  setup: [
+    'Set the names, then start the pressure.',
+    'The table is ready when the roster is.',
+    'Two seats, one nervous dice pool.'
+  ],
+  win: [
+    'Three trios locked. That\'s a clean finish.',
+    'The crown has been claimed.',
+    'Match point turned into match over.'
+  ]
+} as const;
+
+function pickFlavor(lines: readonly string[], seed: number): string {
+  if (lines.length === 0) {
+    return '';
+  }
+  return lines[Math.abs(seed) % lines.length] ?? lines[0] ?? '';
+}
+
+function getRecentEventText(game: GameState): string {
+  return game.log.slice(-3).map((entry) => entry.message).join(' ').toLowerCase();
+}
+
+function buildTurnBanner(game: GameState | null, yourSeatIndex: number | null, mode: 'local' | 'lan'): TurnBannerCopy {
+  if (!game) {
+    return {
+      label: 'Turn Status',
+      title: 'Set up the table',
+      message: pickFlavor(TURN_FLAVORS.setup, 0),
+      badge: 'Waiting',
+      tone: 'neutral'
+    };
+  }
+
+  if (game.phase === 'game-over' && game.winnerIndex !== null) {
+    const winnerName = game.players[game.winnerIndex]?.name ?? 'Unknown player';
+    return {
+      label: 'Game Over',
+      title: `${winnerName} wins`,
+      message: pickFlavor(TURN_FLAVORS.win, game.turnNumber + game.logCounter),
+      badge: 'Final',
+      tone: 'win'
+    };
+  }
+
+  const currentPlayer = game.players[game.currentPlayerIndex];
+  const isLanView = mode === 'lan' && yourSeatIndex !== null;
+  const isMyTurn = isLanView && yourSeatIndex === game.currentPlayerIndex;
+  const recentEvent = getRecentEventText(game);
+  const seed = game.turnNumber + game.logCounter + (yourSeatIndex ?? 0);
+
+  if (isLanView) {
+    if (isMyTurn) {
+      if (recentEvent.includes('bust')) {
+        return {
+          label: 'Your Turn',
+          title: 'You are up next',
+          message: pickFlavor(TURN_FLAVORS.bust, seed),
+          badge: 'Your turn',
+          tone: 'your-turn'
+        };
+      }
+
+      if (recentEvent.includes('rainbow')) {
+        return {
+          label: 'Your Turn',
+          title: 'Rainbow streak alive',
+          message: pickFlavor(TURN_FLAVORS.bonus, seed),
+          badge: 'Your turn',
+          tone: 'your-turn'
+        };
+      }
+
+      if (recentEvent.includes('cashed out')) {
+        return {
+          label: 'Your Turn',
+          title: 'You have the dice',
+          message: pickFlavor(TURN_FLAVORS.safe, seed),
+          badge: 'Your turn',
+          tone: 'your-turn'
+        };
+      }
+
+      if (recentEvent.includes('stole')) {
+        return {
+          label: 'Your Turn',
+          title: 'A little theft never hurts',
+          message: pickFlavor(TURN_FLAVORS.steal, seed),
+          badge: 'Your turn',
+          tone: 'your-turn'
+        };
+      }
+
+      if (recentEvent.includes('placed')) {
+        return {
+          label: 'Your Turn',
+          title: 'Keep the pressure on',
+          message: pickFlavor(TURN_FLAVORS.yourTurn, seed),
+          badge: 'Your turn',
+          tone: 'your-turn'
+        };
+      }
+
+      return {
+        label: 'Your Turn',
+        title: 'You are up',
+        message: pickFlavor(TURN_FLAVORS.yourTurn, seed),
+        badge: 'Your turn',
+        tone: 'your-turn'
+      };
+    }
+
+    if (recentEvent.includes('bust')) {
+      return {
+        label: 'Waiting',
+        title: `Waiting on ${currentPlayer?.name ?? 'the other player'}`,
+        message: pickFlavor(TURN_FLAVORS.bust, seed),
+        badge: 'Waiting',
+        tone: 'waiting'
+      };
+    }
+
+    if (recentEvent.includes('rainbow')) {
+      return {
+        label: 'Waiting',
+        title: `Waiting on ${currentPlayer?.name ?? 'the other player'}`,
+        message: pickFlavor(TURN_FLAVORS.bonus, seed),
+        badge: 'Waiting',
+        tone: 'waiting'
+      };
+    }
+
+    if (recentEvent.includes('cashed out')) {
+      return {
+        label: 'Waiting',
+        title: `Waiting on ${currentPlayer?.name ?? 'the other player'}`,
+        message: pickFlavor(TURN_FLAVORS.safe, seed),
+        badge: 'Waiting',
+        tone: 'waiting'
+      };
+    }
+
+    if (recentEvent.includes('stole')) {
+      return {
+        label: 'Waiting',
+        title: `Waiting on ${currentPlayer?.name ?? 'the other player'}`,
+        message: pickFlavor(TURN_FLAVORS.steal, seed),
+        badge: 'Waiting',
+        tone: 'waiting'
+      };
+    }
+
+    if (recentEvent.includes('placed')) {
+      return {
+        label: 'Waiting',
+        title: `Waiting on ${currentPlayer?.name ?? 'the other player'}`,
+        message: pickFlavor(TURN_FLAVORS.waiting, seed),
+        badge: 'Waiting',
+        tone: 'waiting'
+      };
+    }
+
+    return {
+      label: 'Waiting',
+      title: `Waiting on ${currentPlayer?.name ?? 'the other player'}`,
+      message: pickFlavor(TURN_FLAVORS.waiting, seed),
+      badge: 'Waiting',
+      tone: 'waiting'
+    };
+  }
+
+  return {
+    label: 'Turn Status',
+    title: `${currentPlayer?.name ?? 'Next player'} is up`,
+    message: pickFlavor(TURN_FLAVORS.waiting, seed),
+    badge: 'Current turn',
+    tone: 'neutral'
+  };
+}
+
+function buildRollFeedback(
+  game: GameState | null,
+  yourSeatIndex: number | null,
+  mode: 'local' | 'lan'
+): RollFeedbackCopy | null {
+  if (!game?.lastRoll || game.lastRoll.outcome === 'pending') {
+    return null;
+  }
+
+  const seed = game.turnNumber + game.logCounter + (yourSeatIndex ?? 0);
+  const bustedSeatIndex = game.lastRoll.outcome === 'bust'
+    ? (game.currentPlayerIndex + game.playerCount - 1) % game.playerCount
+    : null;
+  const bustedPlayerName = bustedSeatIndex !== null ? game.players[bustedSeatIndex]?.name ?? 'Unknown player' : null;
+  const isMyBust = mode === 'lan' && yourSeatIndex !== null && bustedSeatIndex === yourSeatIndex;
+
+  switch (game.lastRoll.outcome) {
+    case 'bust':
+      return {
+        label: 'Roll Result',
+        title: isMyBust ? 'YOU BUSTED' : `${bustedPlayerName ?? 'That player'} busted`,
+        message: isMyBust
+          ? pickFlavor(TURN_FLAVORS.bust, seed)
+          : `${bustedPlayerName ?? 'The other player'} lost the turn and the table moved on.`,
+        tone: 'bust'
+      };
+    case 'bonus':
+      return {
+        label: 'Roll Result',
+        title: 'RAINBOW BONUS',
+        message: pickFlavor(TURN_FLAVORS.bonus, seed),
+        tone: 'bonus'
+      };
+    case 'safe':
+      return {
+        label: 'Roll Result',
+        title: 'SAFE CASH-OUT',
+        message: pickFlavor(TURN_FLAVORS.safe, seed),
+        tone: 'safe'
+      };
+    case 'win':
+      return {
+        label: 'Roll Result',
+        title: 'MATCH OVER',
+        message: pickFlavor(TURN_FLAVORS.win, seed),
+        tone: 'win'
+      };
+    default:
+      return null;
+  }
+}
+
+function getMusicLabel(status: ReturnType<typeof getBackgroundMusicStatus>): string {
+  switch (status) {
+    case 'playing':
+      return 'Playing';
+    case 'loading':
+      return 'Loading';
+    case 'paused':
+      return 'Paused';
+    case 'error':
+      return 'Error';
+    case 'unsupported':
+      return 'Unsupported';
+    default:
+      return 'Stopped';
+  }
 }
 
 function formatFace(value: string): string {
@@ -95,7 +391,10 @@ function App() {
   const [localGame, setLocalGame] = useState<GameState | null>(null);
   const [draft, setDraft] = useState<DraftSelection | null>(null);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [musicMuted, setMusicMuted] = useState(false);
+  const [musicVolume, setMusicVolume] = useState(0.18);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [, setAudioPulse] = useState(0);
   const autoJoinRef = useRef<string | null>(null);
   const previousSeatIndexRef = useRef<number | null>(null);
   const lan = useLanMatch(mode === 'lan');
@@ -122,15 +421,31 @@ function App() {
     }
   }, []);
 
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const refresh = () => setAudioPulse((value) => value + 1);
+    const intervalId = window.setInterval(refresh, 400);
+
+    return () => {
+      window.clearInterval(intervalId);
+      stopBackgroundMusic();
+    };
+  }, []);
+
   const inviteUrl = useMemo(() => {
-    if (typeof window === 'undefined' || !lan.room) {
+    if (!lan.room || !lan.publicHttpUrl) {
       return '';
     }
-    const url = new URL(window.location.href);
+
+    const url = new URL(lan.publicHttpUrl);
+    url.searchParams.set('server', lan.publicHttpUrl);
     url.searchParams.set('mode', 'lan');
     url.searchParams.set('room', lan.room.code);
     return url.toString();
-  }, [lan.room]);
+  }, [lan.room, lan.publicHttpUrl]);
 
   useEffect(() => {
     if (mode !== 'lan' || !roomCode || lan.room || lan.status !== 'connected') {
@@ -145,6 +460,14 @@ function App() {
     autoJoinRef.current = normalizedCode;
     lan.joinRoom(normalizedCode, names[0]?.trim() || 'Player 1');
   }, [lan, lan.room, lan.status, mode, names, roomCode]);
+
+  useEffect(() => {
+    const active = Boolean(game && game.phase !== 'game-over');
+    syncBackgroundMusic(active);
+    if (!active) {
+      stopBackgroundMusic();
+    }
+  }, [game]);
 
   useEffect(() => {
     if (!game?.pendingRoll) {
@@ -267,10 +590,39 @@ function App() {
     setLocalGame(null);
   }
 
+  function startMusic() {
+    setAudioPulse((value) => value + 1);
+    startBackgroundMusic(musicVolume, musicMuted)
+      .then(() => setAudioPulse((value) => value + 1))
+      .catch(() => setAudioPulse((value) => value + 1));
+  }
+
+  function stopMusic() {
+    pauseBackgroundMusic();
+    stopBackgroundMusic();
+    setAudioPulse((value) => value + 1);
+  }
+
+  function handleMusicVolumeChange(value: number) {
+    setMusicVolume(value);
+    setBackgroundMusicVolume(value);
+    setAudioPulse((pulse) => pulse + 1);
+  }
+
+  function handleMusicMuteChange(nextMuted: boolean) {
+    setMusicMuted(nextMuted);
+    setBackgroundMusicMuted(nextMuted);
+    setAudioPulse((pulse) => pulse + 1);
+  }
+
   const currentPlayer = game ? game.players[game.currentPlayerIndex] : null;
   const currentLog = game?.log.at(-1)?.message ?? 'Set up the table and start the match.';
   const canStop = Boolean(game && game.phase === 'turn' && getCounterTotal(game) > 0);
   const uniqueCounterColors = game ? getUniqueCounterColors(game) : [];
+  const turnBanner = buildTurnBanner(game, mode === 'lan' ? lan.yourSeatIndex : null, mode);
+  const rollFeedback = buildRollFeedback(game, mode === 'lan' ? lan.yourSeatIndex : null, mode);
+  const musicStatus = getBackgroundMusicStatus();
+  const musicLabel = getMusicLabel(musicStatus);
 
   const bankRows = game ? expandCounts(game.bank) : [];
   const counterRows = game ? expandCounts(game.counter) : [];
@@ -412,6 +764,39 @@ function App() {
             Bank: {getBankRemaining(game)} pieces · Counter: {getCounterTotal(game)} pieces · Turn {game.turnNumber}
             {mode === 'lan' && lan.room ? ` · Room ${lan.room.code} · Seat ${lan.yourSeatIndex !== null ? lan.yourSeatIndex + 1 : 'spectator'}` : ''}
           </p>
+          <div className="audio-controls" aria-label="Background music controls">
+            <div className="audio-controls-copy">
+              <p className="label">Background Music</p>
+              <p className="audio-controls-status">{musicLabel}</p>
+            </div>
+            <div className="audio-controls-actions">
+              <button type="button" className="primary-button audio-start" onClick={startMusic}>
+                Play Music
+              </button>
+              <button type="button" className="secondary-button audio-stop" onClick={stopMusic}>
+                Stop Music
+              </button>
+              <label className="audio-mute">
+                <input
+                  type="checkbox"
+                  checked={musicMuted}
+                  onChange={(event) => handleMusicMuteChange(event.target.checked)}
+                />
+                <span>Mute</span>
+              </label>
+              <label className="audio-volume">
+                <span>Volume</span>
+                <input
+                  type="range"
+                  min="0"
+                  max="100"
+                  step="1"
+                  value={Math.round(musicVolume * 100)}
+                  onChange={(event) => handleMusicVolumeChange(Number(event.target.value) / 100)}
+                />
+              </label>
+            </div>
+          </div>
         </div>
 
         <div className="topbar-actions">
@@ -420,7 +805,7 @@ function App() {
             className={soundEnabled ? 'ghost-button active' : 'ghost-button'}
             onClick={() => setSoundEnabled((value) => !value)}
           >
-            Sound {soundEnabled ? 'On' : 'Off'}
+            Effects {soundEnabled ? 'On' : 'Off'}
           </button>
           <button
             type="button"
@@ -435,19 +820,43 @@ function App() {
         </div>
       </header>
 
+      {game.phase === 'game-over' && game.winnerIndex !== null ? (
+        <section className="winner-banner" role="status" aria-live="polite">
+          <div className="winner-card">
+            <p className="eyebrow">Game Over</p>
+            <h2>{game.players[game.winnerIndex]?.name} wins!</h2>
+            <p className="lede">Three trios locked. That&apos;s a clean finish.</p>
+            <div className="winner-actions">
+              <button
+                type="button"
+                className="primary-button"
+                onClick={restartMatch}
+              >
+                New Match
+              </button>
+              <button type="button" className="secondary-button" onClick={returnToSetup}>
+                {mode === 'lan' ? 'Reset Room' : 'Edit Setup'}
+              </button>
+            </div>
+          </div>
+        </section>
+      ) : null}
+
       <main className="board-layout">
         <section className="table-surface">
           <div className="table-orb table-orb-a" aria-hidden="true" />
           <div className="table-orb table-orb-b" aria-hidden="true" />
 
-          <div className="status-banner">
-            <div>
-              <p className="label">Active Player</p>
-              <h2>{currentPlayer?.name}</h2>
+          <div className={`status-banner tone-${turnBanner.tone}`}>
+            <div className="turn-copy">
+              <p className="label">{turnBanner.label}</p>
+              <h2>{turnBanner.title}</h2>
+              <p className="turn-message">{turnBanner.message}</p>
             </div>
             <div className="status-pills">
+              <span className="pill status-pill emphasis">{turnBanner.badge}</span>
               <span className="pill">
-                {currentPlayer ? `${getPlayerTrios(currentPlayer)} trio${getPlayerTrios(currentPlayer) === 1 ? '' : 's'}` : '0 trios'}
+                {currentPlayer ? `${currentPlayer.name} · ${getPlayerTrios(currentPlayer)} trio${getPlayerTrios(currentPlayer) === 1 ? '' : 's'}` : 'No active player'}
               </span>
               <span className="pill">{game.phase === 'choose' ? 'Picking a piece' : 'Ready to roll'}</span>
             </div>
@@ -497,6 +906,14 @@ function App() {
                   Stop and Cash Out
                 </button>
               </div>
+
+              {rollFeedback ? (
+                <div className={`roll-result tone-${rollFeedback.tone}`} role="status" aria-live="polite">
+                  <p className="label">{rollFeedback.label}</p>
+                  <h4>{rollFeedback.title}</h4>
+                  <p>{rollFeedback.message}</p>
+                </div>
+              ) : null}
 
               {game.phase === 'choose' && game.pendingRoll && draft ? (
                 <div className="choice-panel">
@@ -694,28 +1111,6 @@ function App() {
         </aside>
       </main>
 
-      {game.phase === 'game-over' && game.winnerIndex !== null ? (
-        <div className="winner-overlay" role="dialog" aria-modal="true">
-          <div className="winner-card">
-            <p className="eyebrow">Game Over</p>
-            <h2>{game.players[game.winnerIndex]?.name} wins!</h2>
-            <p className="lede">Three monochrome trios are locked in. Time to start another table.</p>
-            <div className="winner-actions">
-              <button
-                type="button"
-                className="primary-button"
-                onClick={restartMatch}
-              >
-                New Match
-              </button>
-              <button type="button" className="secondary-button" onClick={returnToSetup}>
-                {mode === 'lan' ? 'Reset Room' : 'Edit Setup'}
-              </button>
-            </div>
-          </div>
-        </div>
-      ) : null}
-
       {toastMessage ? (
         <div className="toast-banner" role="status" aria-live="polite">
           {toastMessage}
@@ -796,6 +1191,22 @@ function LanLobby({
   const canStart = Boolean(room?.canStart && lan.isHost);
   const [qrDataUrl, setQrDataUrl] = useState('');
   const [copiedRoomCode, setCopiedRoomCode] = useState(false);
+  const [seatDrafts, setSeatDrafts] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    if (!room) {
+      setSeatDrafts({});
+      return;
+    }
+
+    setSeatDrafts((current) => {
+      const next: Record<number, string> = {};
+      for (const seat of room.seats) {
+        next[seat.index] = current[seat.index] ?? seat.name;
+      }
+      return next;
+    });
+  }, [room?.code, room?.phase, room?.seats.map((seat) => seat.name).join('|')]);
 
   useEffect(() => {
     let active = true;
@@ -846,6 +1257,14 @@ function LanLobby({
     window.setTimeout(() => setCopiedRoomCode(false), 1500);
   }
 
+  function saveSeatName(seatIndex: number) {
+    if (!room || room.phase !== 'lobby') {
+      return;
+    }
+
+    lan.renameSeat(seatIndex, seatDrafts[seatIndex] ?? '');
+  }
+
   return (
     <div className="app-shell setup-shell">
       <main className="setup-card lobby-shell">
@@ -893,6 +1312,9 @@ function LanLobby({
               <span className="label">Target server</span>
               <code>{lan.serverUrl || 'ws://<room-server>:3000'}</code>
             </div>
+            <p className="support-copy subtle-small">
+              The invite link and QR code now point at the LAN room server, not the Vite dev server.
+            </p>
 
             <label className="field">
               <span>Your name</span>
@@ -945,7 +1367,7 @@ function LanLobby({
                   Reconnect
                 </button>
                 <button type="button" className={soundEnabled ? 'ghost-button active' : 'ghost-button'} onClick={() => setSoundEnabled((value) => !value)}>
-                  Sound {soundEnabled ? 'On' : 'Off'}
+                  Effects {soundEnabled ? 'On' : 'Off'}
                 </button>
               </div>
             </div>
@@ -1003,6 +1425,9 @@ function LanLobby({
                       </button>
                     </div>
                     <p className="support-copy">Type this code on another device, or use the invite link above.</p>
+                    <p className="support-copy subtle-small">
+                      Invite URL: {inviteUrl || 'Waiting for the host network address...'}
+                    </p>
                   </div>
 
                   <div className="invite-qr">
@@ -1019,7 +1444,10 @@ function LanLobby({
                     <article key={seat.index} className={seat.connected ? 'seat-card connected' : 'seat-card'}>
                       <div className="seat-head">
                         <div>
-                          <p className="label">Seat {seat.index + 1}</p>
+                          <p className="label">
+                            Seat {seat.index + 1}
+                            {seat.clientId === lan.clientId ? ' · You' : ''}
+                          </p>
                           <h4>{seat.name}</h4>
                         </div>
                         <span className={seat.connected ? 'seat-dot connected' : 'seat-dot'} />
@@ -1027,6 +1455,27 @@ function LanLobby({
                       <p className="support-copy">
                         {seat.clientId ? (seat.connected ? 'Connected' : 'Saved for reconnect') : 'Open seat'}
                       </p>
+                      {seat.clientId === lan.clientId && room.phase === 'lobby' ? (
+                        <div className="seat-editor">
+                          <label className="field seat-field">
+                            <span>{seat.index === 0 ? 'Host name' : 'Your name'}</span>
+                            <input
+                              type="text"
+                              value={seatDrafts[seat.index] ?? seat.name}
+                              onChange={(event) =>
+                                setSeatDrafts((current) => ({
+                                  ...current,
+                                  [seat.index]: event.target.value
+                                }))
+                              }
+                              placeholder={seat.index === 0 ? 'Player 1' : `Player ${seat.index + 1}`}
+                            />
+                          </label>
+                          <button type="button" className="ghost-button" onClick={() => saveSeatName(seat.index)}>
+                            Save Name
+                          </button>
+                        </div>
+                      ) : null}
                     </article>
                   ))}
                 </div>

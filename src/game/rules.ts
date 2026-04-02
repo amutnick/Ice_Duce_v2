@@ -333,9 +333,8 @@ function triggerBust(state: GameState, message: string): GameState {
   const next = createLogEntry(returnCounterToBank(state), message);
   const previousRoll: LastRoll = next.lastRoll ?? FALLBACK_LAST_ROLL;
   return {
-    ...next,
+    ...advanceTurn(next),
     pendingRoll: null,
-    phase: 'turn',
     lastRoll: { ...previousRoll, outcome: 'bust' }
   };
 }

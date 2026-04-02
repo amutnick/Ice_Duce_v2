@@ -15,6 +15,7 @@ export interface LanRoomSnapshot {
   phase: 'lobby' | 'playing';
   playerCount: PlayerCount;
   hostClientId: string;
+  publicHttpUrl: string;
   seats: LanSeat[];
   canStart: boolean;
 }
@@ -43,6 +44,7 @@ type ClientMessage =
   | { type: 'client:resume'; clientId: string }
   | { type: 'room:create'; clientId: string; playerName: string; playerCount: PlayerCount }
   | { type: 'room:join'; clientId: string; roomCode: string; playerName: string }
+  | { type: 'room:rename-seat'; clientId: string; seatIndex: number; name: string }
   | { type: 'room:start'; clientId: string }
   | { type: 'room:reset'; clientId: string }
   | { type: 'game:action'; clientId: string; action: Action };
@@ -108,6 +110,28 @@ export function useLanMatch(enabled = true) {
 
     return `${protocol}//${hostname}:3000`;
   }, []);
+
+  const serverHttpUrl = useMemo(() => {
+    if (!serverUrl) {
+      return '';
+    }
+
+    try {
+      const url = new URL(serverUrl);
+      url.protocol = url.protocol === 'wss:' ? 'https:' : 'http:';
+      return url.toString().replace(/\/$/, '');
+    } catch {
+      return '';
+    }
+  }, [serverUrl]);
+
+  const publicHttpUrl = useMemo(() => {
+    if (room?.publicHttpUrl) {
+      return room.publicHttpUrl.replace(/\/$/, '');
+    }
+
+    return serverHttpUrl;
+  }, [room?.publicHttpUrl, serverHttpUrl]);
 
   function send(payload: ClientMessage) {
     const socket = socketRef.current;
@@ -238,6 +262,10 @@ export function useLanMatch(enabled = true) {
     send({ type: 'room:join', clientId: clientIdRef.current, roomCode: roomCode.trim().toUpperCase(), playerName });
   }
 
+  function renameSeat(seatIndex: number, name: string) {
+    send({ type: 'room:rename-seat', clientId: clientIdRef.current, seatIndex, name });
+  }
+
   function startRoom() {
     send({ type: 'room:start', clientId: clientIdRef.current });
   }
@@ -264,9 +292,12 @@ export function useLanMatch(enabled = true) {
     isHost,
     message,
     serverUrl,
+    serverHttpUrl,
+    publicHttpUrl,
     clientId: clientIdRef.current,
     createRoom,
     joinRoom,
+    renameSeat,
     startRoom,
     resetRoom,
     sendGameAction,

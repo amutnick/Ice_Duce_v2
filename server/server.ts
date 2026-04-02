@@ -1,5 +1,6 @@
 import { createServer, IncomingMessage, ServerResponse } from 'node:http';
 import { existsSync, createReadStream } from 'node:fs';
+import { hostname as systemHostname, networkInterfaces } from 'node:os';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { randomUUID } from 'node:crypto';
@@ -23,12 +24,14 @@ interface RoomState {
   seats: SeatState[];
   gameState: GameState | null;
   seed: number;
+  publicHttpUrl: string;
 }
 
 type ClientMessage =
   | { type: 'client:resume'; clientId: string }
   | { type: 'room:create'; clientId: string; playerName: string; playerCount: PlayerCount }
   | { type: 'room:join'; clientId: string; roomCode: string; playerName: string }
+  | { type: 'room:rename-seat'; clientId: string; seatIndex: number; name: string }
   | { type: 'room:start'; clientId: string }
   | { type: 'room:reset'; clientId: string }
   | { type: 'game:action'; clientId: string; action: Action };
@@ -40,6 +43,8 @@ const distDir = path.join(projectRoot, 'dist');
 const port = Number(process.env.PORT || 3000);
 const rooms = new Map<string, RoomState>();
 const connections = new Map<WebSocket, { clientId: string | null; roomCode: string | null }>();
+const hostName = process.env.ICE_DICE_HOST?.trim() || findLanHostName() || `${systemHostname()}.local`;
+const publicHttpUrl = `http://${hostName}:${port}`;
 
 const mimeTypes: Record<string, string> = {
   '.html': 'text/html; charset=utf-8',
@@ -58,6 +63,22 @@ function sendJson(ws: WebSocket, payload: unknown) {
   if (ws.readyState === WebSocket.OPEN) {
     ws.send(JSON.stringify(payload));
   }
+}
+
+function findLanHostName(): string | null {
+  const interfaces = networkInterfaces();
+  for (const entries of Object.values(interfaces)) {
+    if (!entries) {
+      continue;
+    }
+    for (const entry of entries) {
+      if (entry.family === 'IPv4' && !entry.internal) {
+        return entry.address;
+      }
+    }
+  }
+
+  return null;
 }
 
 function seedFromCode(code: string): number {
@@ -87,6 +108,7 @@ function roomSnapshot(room: RoomState) {
     phase: room.phase,
     playerCount: room.playerCount,
     hostClientId: room.hostClientId,
+    publicHttpUrl: room.publicHttpUrl,
     seats: room.seats.map((seat) => ({
       index: seat.index,
       name: seat.name,
@@ -166,7 +188,8 @@ function createRoom(playerCount: PlayerCount, playerName: string, clientId: stri
     hostClientId: clientId,
     seats,
     gameState: null,
-    seed: seedFromCode(code)
+    seed: seedFromCode(code),
+    publicHttpUrl
   };
 
   rooms.set(code, room);
@@ -316,6 +339,43 @@ wsServer.on('connection', (ws) => {
         return;
       }
 
+      if (payload.type === 'room:rename-seat') {
+        const roomCode = connection.roomCode;
+        if (!roomCode) {
+          sendJson(ws, { type: 'room:error', message: 'Join or create a room first.' });
+          return;
+        }
+
+        const room = rooms.get(roomCode);
+        if (!room) {
+          sendJson(ws, { type: 'room:error', message: 'The room no longer exists.' });
+          return;
+        }
+
+        if (room.phase !== 'lobby') {
+          sendJson(ws, { type: 'room:error', message: 'Seat names are locked once the match starts.' });
+          return;
+        }
+
+        const seat = room.seats[payload.seatIndex];
+        if (!seat) {
+          sendJson(ws, { type: 'room:error', message: 'That seat does not exist.' });
+          return;
+        }
+
+        if (seat.clientId !== payload.clientId) {
+          sendJson(ws, { type: 'room:error', message: 'You can only rename your own seat.' });
+          return;
+        }
+
+        room.seats[payload.seatIndex] = {
+          ...seat,
+          name: payload.name.trim() || defaultSeatName(payload.seatIndex)
+        };
+        sendRoomState(room);
+        return;
+      }
+
       if (!connection.roomCode) {
         sendJson(ws, { type: 'room:error', message: 'Join or create a room first.' });
         return;
@@ -387,4 +447,5 @@ wsServer.on('connection', (ws) => {
 
 httpServer.listen(port, '0.0.0.0', () => {
   console.log(`Ice Dice LAN server listening on http://0.0.0.0:${port}`);
+  console.log(`Ice Dice invite base URL: ${publicHttpUrl}`);
 });
