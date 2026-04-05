@@ -16,11 +16,16 @@ import {
   SIZES,
   type Action,
   type Color,
+  type ColorFace,
   type GameState,
   type PieceCounts,
   type PlayerCount,
+  SIZE_FACES,
+  type SizeFace,
   type Size
 } from './game/rules';
+import { randomInt } from './game/rng';
+import { DiceRollModal } from './game/DiceRollModal';
 import { getBackgroundMusicStatus, pauseBackgroundMusic, setBackgroundMusicMuted, setBackgroundMusicVolume, startBackgroundMusic, stopBackgroundMusic, syncBackgroundMusic } from './game/backgroundMusic';
 import { playSound } from './game/sound';
 import { useLanMatch } from './game/useLanMatch';
@@ -68,6 +73,11 @@ interface RollFeedbackCopy {
   title: string;
   message: string;
   tone: 'neutral' | 'bust' | 'bonus' | 'safe' | 'win';
+}
+
+interface RollPreview {
+  colorFace: ColorFace;
+  sizeFace: SizeFace;
 }
 
 type LanMatch = ReturnType<typeof useLanMatch>;
@@ -128,6 +138,15 @@ function pickFlavor(lines: readonly string[], seed: number): string {
 
 function getRecentEventText(game: GameState): string {
   return game.log.slice(-3).map((entry) => entry.message).join(' ').toLowerCase();
+}
+
+function peekRoll(seed: number): RollPreview {
+  const [colorIndex, seedAfterColor] = randomInt(seed, COLOR_FACE_OPTIONS.length);
+  const [sizeIndex] = randomInt(seedAfterColor, SIZE_FACES.length);
+  return {
+    colorFace: COLOR_FACE_OPTIONS[colorIndex] as ColorFace,
+    sizeFace: SIZE_FACES[sizeIndex] as SizeFace
+  };
 }
 
 function buildTurnBanner(game: GameState | null, yourSeatIndex: number | null, mode: 'local' | 'lan'): TurnBannerCopy {
@@ -394,9 +413,12 @@ function App() {
   const [musicMuted, setMusicMuted] = useState(false);
   const [musicVolume, setMusicVolume] = useState(0.18);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [rollPreview, setRollPreview] = useState<RollPreview | null>(null);
+  const [rolling, setRolling] = useState(false);
   const [, setAudioPulse] = useState(0);
   const autoJoinRef = useRef<string | null>(null);
   const previousSeatIndexRef = useRef<number | null>(null);
+  const rollTimeoutRef = useRef<number | null>(null);
   const lan = useLanMatch(mode === 'lan');
   const game = mode === 'lan' ? lan.game : localGame;
 
@@ -468,6 +490,15 @@ function App() {
       stopBackgroundMusic();
     }
   }, [game]);
+
+  useEffect(() => {
+    return () => {
+      if (rollTimeoutRef.current !== null) {
+        window.clearTimeout(rollTimeoutRef.current);
+        rollTimeoutRef.current = null;
+      }
+    };
+  }, []);
 
   useEffect(() => {
     if (!game?.pendingRoll) {
@@ -571,6 +602,27 @@ function App() {
     }
   }
 
+  function beginRoll() {
+    if (!game || rolling || game.phase !== 'turn') {
+      return;
+    }
+
+    const preview = peekRoll(game.rngSeed);
+    setRollPreview(preview);
+    setRolling(true);
+
+    if (rollTimeoutRef.current !== null) {
+      window.clearTimeout(rollTimeoutRef.current);
+    }
+
+    rollTimeoutRef.current = window.setTimeout(() => {
+      rollTimeoutRef.current = null;
+      handleAction({ type: 'roll' });
+      setRolling(false);
+      setRollPreview(null);
+    }, 1260);
+  }
+
   function restartMatch() {
     if (mode === 'lan') {
       lan.resetRoom();
@@ -617,7 +669,8 @@ function App() {
 
   const currentPlayer = game ? game.players[game.currentPlayerIndex] : null;
   const currentLog = game?.log.at(-1)?.message ?? 'Set up the table and start the match.';
-  const canStop = Boolean(game && game.phase === 'turn' && getCounterTotal(game) > 0);
+  const canRoll = Boolean(game && game.phase === 'turn' && !rolling);
+  const canStop = Boolean(game && game.phase === 'turn' && getCounterTotal(game) > 0 && !rolling);
   const uniqueCounterColors = game ? getUniqueCounterColors(game) : [];
   const turnBanner = buildTurnBanner(game, mode === 'lan' ? lan.yourSeatIndex : null, mode);
   const rollFeedback = buildRollFeedback(game, mode === 'lan' ? lan.yourSeatIndex : null, mode);
@@ -888,25 +941,6 @@ function App() {
                 />
               </div>
 
-              <div className="action-row">
-                <button
-                  type="button"
-                  className="primary-button"
-                  disabled={game.phase !== 'turn'}
-                  onClick={() => handleAction({ type: 'roll' })}
-                >
-                  Roll Dice
-                </button>
-                <button
-                  type="button"
-                  className="secondary-button"
-                  disabled={!canStop}
-                  onClick={() => handleAction({ type: 'stopTurn' })}
-                >
-                  Stop and Cash Out
-                </button>
-              </div>
-
               {rollFeedback ? (
                 <div className={`roll-result tone-${rollFeedback.tone}`} role="status" aria-live="polite">
                   <p className="label">{rollFeedback.label}</p>
@@ -998,7 +1032,27 @@ function App() {
                   <p className="label">Counter</p>
                   <h3>{uniqueCounterColors.length > 0 ? `${uniqueCounterColors.length} colors in play` : 'Empty at the moment'}</h3>
                 </div>
-                <span className="pill">{getCounterTotal(game)} pieces</span>
+                <div className="counter-head-actions">
+                  <span className="pill">{getCounterTotal(game)} pieces</span>
+                  <div className="turn-control-buttons" aria-label="Roll and turn controls">
+                    <button
+                      type="button"
+                      className="primary-button compact"
+                      disabled={!canRoll}
+                      onClick={beginRoll}
+                    >
+                      Roll Dice
+                    </button>
+                    <button
+                      type="button"
+                      className="secondary-button compact"
+                      disabled={!canStop}
+                      onClick={() => handleAction({ type: 'stopTurn' })}
+                    >
+                      End My Turn
+                    </button>
+                  </div>
+                </div>
               </div>
 
               <div className="piece-grid counter-grid">
@@ -1110,6 +1164,14 @@ function App() {
           </section>
         </aside>
       </main>
+
+      <DiceRollModal
+        open={rolling && rollPreview !== null}
+        title="The ice is stirring"
+        subtitle="The dice are gathering frost before they settle back onto the playfield."
+        colorFace={rollPreview?.colorFace ?? 'azure'}
+        sizeFace={rollPreview?.sizeFace ?? 'small'}
+      />
 
       {toastMessage ? (
         <div className="toast-banner" role="status" aria-live="polite">

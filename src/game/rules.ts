@@ -136,11 +136,11 @@ function countTrios(vault: PieceCounts): number {
   }, 0);
 }
 
-function createBank(playerCount: PlayerCount): PieceCounts {
+function createBank(): PieceCounts {
   const bank = createEmptyCounts();
   for (const color of COLORS) {
     for (const size of ['small', 'medium', 'large'] as const) {
-      bank[pieceKey(color, size)] = playerCount;
+      bank[pieceKey(color, size)] = 2;
     }
   }
   return bank;
@@ -180,7 +180,7 @@ function createBaseState(playerCount: PlayerCount, playerNames?: string[], seed 
     currentPlayerIndex: 0,
     turnNumber: 1,
     rngSeed: seed >>> 0,
-    bank: createBank(playerCount),
+    bank: createBank(),
     counter: createEmptyCounts(),
     pendingRoll: null,
     lastRoll: null,
