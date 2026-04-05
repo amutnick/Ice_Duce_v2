@@ -152,6 +152,7 @@ function renderRackRow(color: ColorKey): string {
     return `
       <div class="rack-slot rack-slot-${size}">
         <img src="${asset.src}" alt="${asset.alt}" />
+        <span class="piece-count">x${PIECES_PER_COLOR}</span>
       </div>
     `;
   }).join('');
@@ -161,7 +162,6 @@ function renderRackRow(color: ColorKey): string {
       <div class="row-label">
         <img class="row-label-frame" src="${BUTTON_ASSETS.small}" alt="" aria-hidden="true" />
         <span class="row-label-text">${colorLabel}</span>
-        <span class="row-count">x${PIECES_PER_COLOR}</span>
       </div>
       <div class="rack-track" aria-label="${colorLabel} pyramid row, small to large">
         ${pieces}
@@ -448,10 +448,10 @@ function createStyleTag(): HTMLStyleElement {
       color: #f5fbff;
     }
 
-    .row-count {
-      position: relative;
+    .piece-count {
+      position: absolute;
+      bottom: 4px;
       z-index: 1;
-      margin-top: 4px;
       padding: 3px 8px;
       border-radius: 999px;
       background: rgba(6, 32, 51, 0.16);
@@ -472,10 +472,12 @@ function createStyleTag(): HTMLStyleElement {
 
     .rack-slot {
       position: relative;
-      display: grid;
-      align-items: end;
-      justify-items: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-end;
       height: 100%;
+      padding-bottom: 8px;
       filter: drop-shadow(0 14px 18px rgba(0, 0, 0, 0.3));
     }
 
@@ -502,6 +504,12 @@ function createStyleTag(): HTMLStyleElement {
     .rack-slot-large img {
       width: clamp(72px, 6vw, 100px);
       transform: translateY(0) rotate(4deg);
+    }
+
+    .rack-slot .piece-count {
+      position: absolute;
+      bottom: 2px;
+      margin-top: 0;
     }
 
     .playfield-panel {
