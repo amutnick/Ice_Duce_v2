@@ -1,0 +1,115 @@
+- generic [ref=e5]:
+  - banner [ref=e6]:
+    - generic [ref=e7]:
+      - img
+      - generic [ref=e8]:
+        - text: Layout Experiment
+        - strong [ref=e9]: Pyramid rack layout
+    - generic [ref=e10]:
+      - img
+      - generic [ref=e11]: Small - Medium - Large
+  - generic [ref=e12]:
+    - region "Pyramid bank rack" [ref=e13]:
+      - generic [ref=e15]:
+        - paragraph [ref=e16]: Bank
+        - heading "Rows that read like the physical rack" [level=2] [ref=e17]
+        - paragraph [ref=e18]: This experiment uses the SVG backgrounds, button frames, and pyramid art to reconstruct the tabletop structure with the smaller pieces closest to the player.
+      - generic [ref=e19]:
+        - article [ref=e20]:
+          - generic [ref=e21]:
+            - img
+            - generic [ref=e22]: Emerald
+          - generic "Emerald pyramid row, small to large" [ref=e23]:
+            - generic [ref=e24]:
+              - img "Emerald small pyramid"
+              - generic [ref=e25]: x2
+            - generic [ref=e26]:
+              - img "Emerald medium pyramid"
+              - generic [ref=e27]: x2
+            - generic [ref=e28]:
+              - img "Emerald large pyramid"
+              - generic [ref=e29]: x2
+        - article [ref=e30]:
+          - generic [ref=e31]:
+            - img
+            - generic [ref=e32]: Amber
+          - generic "Amber pyramid row, small to large" [ref=e33]:
+            - generic [ref=e34]:
+              - img "Amber small pyramid"
+              - generic [ref=e35]: x2
+            - generic [ref=e36]:
+              - img "Amber medium pyramid"
+              - generic [ref=e37]: x2
+            - generic [ref=e38]:
+              - img "Amber large pyramid"
+              - generic [ref=e39]: x2
+        - article [ref=e40]:
+          - generic [ref=e41]:
+            - img
+            - generic [ref=e42]: Coral
+          - generic "Coral pyramid row, small to large" [ref=e43]:
+            - generic [ref=e44]:
+              - img "Coral small pyramid"
+              - generic [ref=e45]: x2
+            - generic [ref=e46]:
+              - img "Coral medium pyramid"
+              - generic [ref=e47]: x2
+            - generic [ref=e48]:
+              - img "Coral large pyramid"
+              - generic [ref=e49]: x2
+        - article [ref=e50]:
+          - generic [ref=e51]:
+            - img
+            - generic [ref=e52]: Violet
+          - generic "Violet pyramid row, small to large" [ref=e53]:
+            - generic [ref=e54]:
+              - img "Violet small pyramid"
+              - generic [ref=e55]: x2
+            - generic [ref=e56]:
+              - img "Violet medium pyramid"
+              - generic [ref=e57]: x2
+            - generic [ref=e58]:
+              - img "Violet large pyramid"
+              - generic [ref=e59]: x2
+        - article [ref=e60]:
+          - generic [ref=e61]:
+            - img
+            - generic [ref=e62]: Azure
+          - generic "Azure pyramid row, small to large" [ref=e63]:
+            - generic [ref=e64]:
+              - img "Azure small pyramid"
+              - generic [ref=e65]: x2
+            - generic [ref=e66]:
+              - img "Azure medium pyramid"
+              - generic [ref=e67]: x2
+            - generic [ref=e68]:
+              - img "Azure large pyramid"
+              - generic [ref=e69]: x2
+    - region "Playfield zones" [ref=e70]:
+      - generic [ref=e72]:
+        - paragraph [ref=e73]: Playfield
+        - heading "Keep the center open, frame the action around it" [level=2] [ref=e74]
+        - paragraph [ref=e75]: The bank is dense and tactile. The counter and vaults stay cleaner so the active turn remains readable at a glance.
+      - generic [ref=e76]:
+        - generic [ref=e77]:
+          - generic [ref=e78]:
+            - img
+            - generic [ref=e79]: Vault
+          - paragraph [ref=e81]: Quiet storage for capped pieces and protected runs.
+        - generic [ref=e82]:
+          - generic [ref=e83]:
+            - img
+            - generic [ref=e84]: Counter
+          - paragraph [ref=e86]: The active center lane stays clear and easy to read.
+        - generic [ref=e87]:
+          - generic [ref=e88]:
+            - img
+            - generic [ref=e89]: Vault
+          - paragraph [ref=e91]: Secondary holding area for the remaining bank flow.
+  - contentinfo [ref=e92]:
+    - paragraph [ref=e93]:
+      - strong [ref=e94]: "Ordering rule:"
+      - text: small pieces sit forward, medium in the middle, and large furthest back.
+    - generic [ref=e95]:
+      - img
+      - generic [ref=e96]: Front to back, x2 each color

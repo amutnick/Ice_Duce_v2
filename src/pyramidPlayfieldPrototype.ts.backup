@@ -373,21 +373,7 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
       </div>
     `;
     
-    const otherPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
-    const otherPlayer = gameState.players[otherPlayerIndex];
-    const otherVault = otherPlayer?.vault ?? {};
-    const bottomVaultContent = renderVault(otherVault);
-    const bottomVault = \`
-      <div class="zone zone-small">
-        <div class="zone-title">
-          <p class="label">Vault</p>
-          <h3>\${otherPlayer?.name ?? 'Player 2'}</h3>
-        </div>
-        <div class="zone-content">
-          \${bottomVaultContent}
-        </div>
-      </div>
-    \`;
+    const bottomVault = renderZone('Vault', 'Player 2', 'small');
     
     root.innerHTML = `
       <div class="pyramid-prototype">

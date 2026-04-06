@@ -18,7 +18,8 @@ const SIZE_FACE_ASSETS: Record<SizeFace, string> = {
   'small-large': new URL('../../art/SVG/Die Shapes/Pyramid Dice Sm and Lg.svg', import.meta.url).href
 };
 
-const BACKGROUND_ASSET = new URL('../../art/SVG/Backgrounds/Background Ice.svg', import.meta.url).href;
+// Use the new Dice BG as the rolling background at reduced scale
+const BACKGROUND_ASSET = new URL('../../art/SVG/Backgrounds/Dice BG.svg', import.meta.url).href;
 
 function formatFace(value: ColorFace | SizeFace): string {
   if (value === 'atom') {
@@ -49,30 +50,34 @@ export function DiceRollModal({ open, title, subtitle, colorFace, sizeFace }: Di
   return (
     <div className="dice-roll-modal" role="dialog" aria-modal="true" aria-label="Rolling dice">
       <div className="dice-roll-backdrop" />
-      <div className="dice-roll-panel" style={{ backgroundImage: `linear-gradient(180deg, rgba(14, 28, 48, 0.96), rgba(8, 16, 29, 0.96)), url(${BACKGROUND_ASSET})` }}>
-        <div className="dice-roll-panel-glow" aria-hidden="true" />
-        <p className="label">Roll in progress</p>
-        <h3>{title}</h3>
-        <p className="dice-roll-copy">{subtitle}</p>
+      <div className="dice-roll-panel">
+        {/* Background image at reduced scale */}
+        <div className="dice-roll-bg" aria-hidden="true" />
+        
+        <div className="dice-roll-content">
+          <p className="label">Roll in progress</p>
+          <h3>{title}</h3>
+          <p className="dice-roll-copy">{subtitle}</p>
 
-        <div className="dice-roll-stage" aria-hidden="true">
-          <article className="roll-die roll-die-color">
-            <img src={COLOR_FACE_ASSETS[colorFace]} alt="" />
-            <span>{formatFace(colorFace)}</span>
-          </article>
-          <article className="roll-die roll-die-size">
-            <img src={SIZE_FACE_ASSETS[sizeFace]} alt="" />
-            <span>{formatFace(sizeFace)}</span>
-          </article>
-        </div>
+          <div className="dice-roll-stage" aria-hidden="true">
+            <article className="roll-die roll-die-color rolling">
+              <img src={COLOR_FACE_ASSETS[colorFace]} alt="" />
+              <span>{formatFace(colorFace)}</span>
+            </article>
+            <article className="roll-die roll-die-size rolling">
+              <img src={SIZE_FACE_ASSETS[sizeFace]} alt="" />
+              <span>{formatFace(sizeFace)}</span>
+            </article>
+          </div>
 
-        <div className="dice-roll-sparkline" aria-hidden="true">
-          {COLOR_FACE_OPTIONS.map((face, index) => (
-            <span key={face} style={{ animationDelay: `${index * 90}ms` }} />
-          ))}
-          {SIZE_FACES.map((face, index) => (
-            <span key={face} style={{ animationDelay: `${index * 90 + 70}ms` }} />
-          ))}
+          <div className="dice-roll-sparkline" aria-hidden="true">
+            {COLOR_FACE_OPTIONS.map((face, index) => (
+              <span key={face} style={{ animationDelay: `${index * 90}ms` }} />
+            ))}
+            {SIZE_FACES.map((face, index) => (
+              <span key={face} style={{ animationDelay: `${index * 90 + 70}ms` }} />
+            ))}
+          </div>
         </div>
       </div>
     </div>

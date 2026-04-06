@@ -1,0 +1,12 @@
+[      67ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451865277:0
+[      71ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/favicon.ico:0
+[   18599ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775452412316:0
+[   32054ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775452425775:0
+[   52350ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775452446072:0
+[   56770ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775452450495:0
+[   70103ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775452463824:0
+[   91453ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775452485174:0
+[  116433ms] ReferenceError: counterData is not defined
+    at createPyramidPlayfieldPrototype (http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775452510140:377:17)
+    at http://localhost:5173/src/pyramidPlayfieldPrototypePage.ts?t=1775452510140:6:19
+[  142810ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775452536531:0

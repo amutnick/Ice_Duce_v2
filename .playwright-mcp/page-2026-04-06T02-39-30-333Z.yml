@@ -1,0 +1,38 @@
+- main [ref=e4]:
+  - paragraph [ref=e6]: Digital tabletop adaptation
+  - heading "Ice Dice" [level=1] [ref=e7]
+  - paragraph [ref=e8]: A press-your-luck game of pyramid rolls, rainbow runs, and risky steals.
+  - radiogroup "Game mode" [ref=e9]:
+    - button "Local Table" [ref=e10] [cursor=pointer]
+    - button "LAN Room" [ref=e11] [cursor=pointer]
+  - generic [ref=e12]:
+    - generic [ref=e13]:
+      - heading "Match Setup" [level=2] [ref=e14]
+      - radiogroup "Player count" [ref=e15]:
+        - button "2 Players" [ref=e16] [cursor=pointer]
+        - button "3 Players" [ref=e17] [cursor=pointer]
+      - generic [ref=e18]:
+        - generic [ref=e19]: Match seed
+        - generic [ref=e20]:
+          - textbox "Match seed in hexadecimal" [ref=e21]: 9DD8D2E
+          - button "Randomize" [ref=e22] [cursor=pointer]
+      - generic [ref=e23]:
+        - generic [ref=e24]:
+          - generic [ref=e25]: Player 1 name
+          - textbox "Player 1 name" [ref=e26]:
+            - /placeholder: Player 1
+            - text: Player 1
+        - generic [ref=e27]:
+          - generic [ref=e28]: Player 2 name
+          - textbox "Player 2 name" [ref=e29]:
+            - /placeholder: Player 2
+            - text: Player 2
+      - button "Start Match" [ref=e30] [cursor=pointer]
+    - generic [ref=e31]:
+      - heading "What You're Building" [level=2] [ref=e32]
+      - list [ref=e33]:
+        - listitem [ref=e34]: Roll color and size dice to pull pyramids from the Bank.
+        - listitem [ref=e35]: Keep rolling until you cash out, bust, or trigger a rainbow bonus.
+        - listitem [ref=e36]: "Fill your Vault with trios: small, medium, and large of the same color."
+        - listitem [ref=e37]: Win by collecting three trios total.
+      - paragraph [ref=e38]: This version is tuned for local hot-seat play first, with a pure rules engine underneath.

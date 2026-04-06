@@ -1,0 +1,134 @@
+- generic [ref=e254]:
+  - generic [ref=e256]:
+    - banner [ref=e257]:
+      - generic [ref=e258]:
+        - img [ref=e259]
+        - generic [ref=e260]:
+          - text: Ice Dice
+          - strong [ref=e261]: Playfield
+      - generic [ref=e262]:
+        - img [ref=e263]
+        - generic [ref=e264]: Turn 2
+    - generic [ref=e265]:
+      - generic [ref=e266]:
+        - strong [ref=e267]: Player 2
+        - text: is up
+      - generic [ref=e268]: "Bank: 29 pieces · Counter: 0 pieces"
+    - generic [ref=e269]: Violet / medium-large - SAFE
+    - generic [ref=e270]:
+      - region "Pyramid bank rack" [ref=e271]:
+        - generic [ref=e272]:
+          - paragraph [ref=e273]: Bank
+          - heading "Rows that read like the physical rack" [level=2] [ref=e274]
+        - generic [ref=e275]:
+          - generic [ref=e276]:
+            - generic [ref=e277]: Emerald
+            - generic [ref=e278]:
+              - generic [ref=e279]:
+                - img "Emerald small pyramid" [ref=e280]
+                - generic [ref=e281]: ×2
+              - generic [ref=e282]:
+                - img "Emerald medium pyramid" [ref=e283]
+                - generic [ref=e284]: ×2
+              - generic [ref=e285]:
+                - img "Emerald large pyramid" [ref=e286]
+                - generic [ref=e287]: ×2
+          - generic [ref=e288]:
+            - generic [ref=e289]: Amber
+            - generic [ref=e290]:
+              - generic [ref=e291]:
+                - img "Amber small pyramid" [ref=e292]
+                - generic [ref=e293]: ×2
+              - generic [ref=e294]:
+                - img "Amber medium pyramid" [ref=e295]
+                - generic [ref=e296]: ×2
+              - generic [ref=e297]:
+                - img "Amber large pyramid" [ref=e298]
+                - generic [ref=e299]: ×2
+          - generic [ref=e300]:
+            - generic [ref=e301]: Coral
+            - generic [ref=e302]:
+              - generic [ref=e303]:
+                - img "Coral small pyramid" [ref=e304]
+                - generic [ref=e305]: ×2
+              - generic [ref=e306]:
+                - img "Coral medium pyramid" [ref=e307]
+                - generic [ref=e308]: ×2
+              - generic [ref=e309]:
+                - img "Coral large pyramid" [ref=e310]
+                - generic [ref=e311]: ×2
+          - generic [ref=e312]:
+            - generic [ref=e313]: Violet
+            - generic [ref=e314]:
+              - generic [ref=e315]:
+                - img "Violet small pyramid" [ref=e316]
+                - generic [ref=e317]: ×2
+              - generic [ref=e318]:
+                - img "Violet medium pyramid" [ref=e319]
+                - generic [ref=e320]: ×2
+              - generic [ref=e321]:
+                - img "Violet large pyramid" [ref=e322]
+                - generic [ref=e323]: ×2
+          - generic [ref=e324]:
+            - generic [ref=e325]: Azure
+            - generic [ref=e326]:
+              - generic [ref=e327]:
+                - img "Azure small pyramid" [ref=e328]
+                - generic [ref=e329]: ×2
+              - generic [ref=e330]:
+                - img "Azure medium pyramid" [ref=e331]
+                - generic [ref=e332]: ×2
+              - generic [ref=e333]:
+                - img "Azure large pyramid" [ref=e334]
+                - generic [ref=e335]: ×2
+      - region "Playfield zones" [ref=e336]:
+        - generic [ref=e337]:
+          - paragraph [ref=e338]: Playfield
+          - heading "Keep the center open" [level=2] [ref=e339]
+        - generic [ref=e340]:
+          - generic [ref=e341]:
+            - generic [ref=e342]:
+              - paragraph [ref=e343]: Vault
+              - heading "Player 2" [level=3] [ref=e344]
+            - generic [ref=e346]: Empty
+          - generic [ref=e347]:
+            - generic [ref=e348]:
+              - paragraph [ref=e349]: Counter
+              - heading "Empty at the moment" [level=3] [ref=e350]
+            - generic [ref=e352]: The Counter is clear
+            - generic [ref=e353]:
+              - button "Roll Dice" [ref=e354] [cursor=pointer]
+              - button "End Turn" [disabled] [ref=e355]
+          - generic [ref=e356]:
+            - generic [ref=e357]:
+              - paragraph [ref=e358]: Vault
+              - heading "Player 2" [level=3] [ref=e359]
+            - generic [ref=e361]: Empty
+    - contentinfo [ref=e362]:
+      - paragraph [ref=e363]:
+        - strong [ref=e364]: "Phase:"
+        - text: turn
+      - generic [ref=e365]:
+        - img [ref=e366]
+        - generic [ref=e367]: Player 2 · 0/3 trios
+  - generic [ref=e370]:
+    - button "Close modal" [ref=e371] [cursor=pointer]: ×
+    - generic [ref=e372]:
+      - paragraph [ref=e373]: Roll Result
+      - heading "Choose Your Pyramid" [level=3] [ref=e381]
+      - paragraph [ref=e375]: Select the piece that matches your roll.
+      - generic [ref=e376]:
+        - article [ref=e377]:
+          - generic [ref=e378]: Violet
+        - article [ref=e379]:
+          - generic [ref=e380]: Medium / Large
+      - generic [ref=e382]:
+        - button "Violet medium pyramid Medium Violet" [ref=e383] [cursor=pointer]:
+          - img "Violet medium pyramid" [ref=e384]
+          - generic [ref=e385]: Medium
+          - generic [ref=e386]: Violet
+        - button "Violet large pyramid Large Violet" [ref=e387] [cursor=pointer]:
+          - img "Violet large pyramid" [ref=e388]
+          - generic [ref=e389]: Large
+          - generic [ref=e390]: Violet
+        - button "Confirm" [disabled] [ref=e391]

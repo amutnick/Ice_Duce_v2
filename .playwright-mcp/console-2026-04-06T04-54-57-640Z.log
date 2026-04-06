@@ -1,0 +1,4 @@
+[      99ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/favicon.ico:0
+[   43920ms] [LOG] Elements found: {stage: true, sparkline: true, selectionGrid: true} @ :6
+[   43922ms] [LOG] All elements found, updating... @ :14
+[   43922ms] [LOG] Update complete @ :30
