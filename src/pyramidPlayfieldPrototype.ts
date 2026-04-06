@@ -303,7 +303,7 @@ function createDiceRollModal(): string {
     .dice-roll-content h3 { margin: 0 0 10px; font-size: 1.8rem; color: var(--text); }
     .dice-roll-copy { color: var(--text-muted); max-width: 46ch; text-align: center; margin-bottom: 20px; }
     .dice-roll-stage { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-bottom: 20px; }
-    .roll-die { min-height: 200px; padding: 18px; display: grid; place-items: center; border-radius: 26px; border: 1px solid var(--ice-glow); background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), rgba(240, 248, 255, 0.8)), linear-gradient(160deg, rgba(255, 255, 255, 0.4), rgba(240, 248, 255, 0.2)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 8px 24px rgba(0, 60, 100, 0.12); }
+    .roll-die { min-height: 200px; animation: dice-shake 0.15s linear infinite;  padding: 18px; display: grid; place-items: center; border-radius: 26px; border: 1px solid var(--ice-glow); background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), rgba(240, 248, 255, 0.8)), linear-gradient(160deg, rgba(255, 255, 255, 0.4), rgba(240, 248, 255, 0.2)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 8px 24px rgba(0, 60, 100, 0.12); }
     .roll-die img { width: min(62%, 160px); max-height: 130px; object-fit: contain; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.15)); }
     .roll-die span { margin-top: 12px; font-family: var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text); font-size: 0.75rem; }
     /* Selection grid */
@@ -314,6 +314,7 @@ function createDiceRollModal(): string {
     .selection-btn img { width: 48px; height: 48px; object-fit: contain; filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1)); }
     .selection-btn span { font-size: 0.74rem; color: var(--text); font-weight: 600; }
     .selection-label { font-size: 0.68rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; }
+    @keyframes dice-shake { 0% { transform: translateX(0); } 25% { transform: translateX(-4px) rotate(-2deg); } 50% { transform: translateX(4px) rotate(2deg); } 75% { transform: translateX(-4px) rotate(-2deg); } 100% { transform: translateX(0); } }
   `;
   return style;
 }
@@ -373,21 +374,7 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
       </div>
     `;
     
-    const otherPlayerIndex = (gameState.currentPlayerIndex + 1) % gameState.players.length;
-    const otherPlayer = gameState.players[otherPlayerIndex];
-    const otherVault = otherPlayer?.vault ?? {};
-    const bottomVaultContent = renderVault(otherVault);
-    const bottomVault = \`
-      <div class="zone zone-small">
-        <div class="zone-title">
-          <p class="label">Vault</p>
-          <h3>\${otherPlayer?.name ?? 'Player 2'}</h3>
-        </div>
-        <div class="zone-content">
-          \${bottomVaultContent}
-        </div>
-      </div>
-    \`;
+    const bottomVault = renderZone('Vault', 'Player 2', 'small');
     
     root.innerHTML = `
       <div class="pyramid-prototype">
@@ -563,6 +550,12 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
     // Generate selection options
     const allowedColors = getAllowedColors(pendingRoll.colorFace);
     const allowedSizes = getAllowedSizes(pendingRoll.sizeFace);
+
+    // Auto-select if only one option available
+    if (allowedColors.length === 1 && allowedSizes.length === 1 && !selectedPyramid) {
+      selectedPyramid = { color: allowedColors[0] as ColorKey, size: allowedSizes[0] as SizeKey };
+    }
+
 
     const selectionGrid = document.getElementById('selectionGrid');
     if (selectionGrid) {

@@ -1,4 +1,4 @@
-import { createPyramidPlayfieldPrototype } from './pyramidPlayfieldPrototype';
+import { createPyramidPlayfieldPrototype } from './pyramidPlayfieldPrototype.ts';
 
 const root = document.getElementById('root');
 
