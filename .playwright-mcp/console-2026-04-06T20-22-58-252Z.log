@@ -1,0 +1,2 @@
+[     165ms] [WARNING] THREE.THREE.Clock: This module has been deprecated. Please use THREE.Timer instead. @ http://localhost:4173/assets/dicePrototype-BrtTwnZd.js:4
+[     190ms] [WARNING] THREE.WebGLShadowMap: PCFSoftShadowMap has been deprecated. Using PCFShadowMap instead. @ http://localhost:4173/assets/dicePrototype-BrtTwnZd.js:4

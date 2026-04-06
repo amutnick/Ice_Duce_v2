@@ -1,0 +1,113 @@
+- generic [ref=e3]:
+  - banner [ref=e39]:
+    - generic [ref=e40]:
+      - paragraph [ref=e41]: Ice Dice
+      - heading "Tabletop pressure, now in the browser" [level=1] [ref=e42]
+      - paragraph [ref=e43]: "Bank: 29 pieces · Counter: 1 pieces · Turn 1"
+      - generic "Background music controls" [ref=e44]:
+        - generic [ref=e45]:
+          - paragraph [ref=e46]: Background Music
+          - paragraph [ref=e47]: Stopped
+        - generic [ref=e48]:
+          - button "Play Music" [ref=e49] [cursor=pointer]
+          - button "Stop Music" [ref=e50] [cursor=pointer]
+          - generic [ref=e51]:
+            - checkbox "Mute" [ref=e52]
+            - generic [ref=e53]: Mute
+          - generic [ref=e54]:
+            - generic [ref=e55]: Volume
+            - slider "Volume" [ref=e56]: "18"
+    - generic [ref=e57]:
+      - button "Effects On" [ref=e58] [cursor=pointer]
+      - button "Restart" [ref=e59] [cursor=pointer]
+      - button "Edit Setup" [ref=e60] [cursor=pointer]
+  - main [ref=e61]:
+    - generic [ref=e62]:
+      - generic [ref=e63]:
+        - generic [ref=e64]:
+          - paragraph [ref=e65]: Turn Status
+          - heading "Player 1 is up" [level=2] [ref=e66]
+          - paragraph [ref=e67]: Your rival is still negotiating with the dice.
+        - generic [ref=e68]:
+          - generic [ref=e69]: Current turn
+          - generic [ref=e70]: Player 1 · 0 trios
+          - generic [ref=e71]: Ready to roll
+      - generic [ref=e72]:
+        - generic [ref=e73]:
+          - generic [ref=e74]:
+            - generic [ref=e75]:
+              - paragraph [ref=e76]: Dice
+              - heading "Roll to reveal your piece" [level=3] [ref=e77]
+            - generic [ref=e78]:
+              - generic [ref=e79]: Azure
+              - generic [ref=e80]: Small
+          - generic [ref=e81]:
+            - article [ref=e82]:
+              - paragraph [ref=e83]: Color Die
+              - generic [ref=e85]: Azure
+            - article [ref=e86]:
+              - paragraph [ref=e87]: Pyramid Die
+              - generic [ref=e89]: Small
+          - status [ref=e155]:
+            - paragraph [ref=e156]: Roll Result
+            - heading "SAFE CASH-OUT" [level=4] [ref=e157]
+            - paragraph [ref=e158]: A calm exit. Sometimes that is the power move.
+        - generic [ref=e90]:
+          - generic [ref=e91]:
+            - generic [ref=e92]:
+              - paragraph [ref=e93]: Counter
+              - heading "1 colors in play" [level=3] [ref=e159]
+            - generic [ref=e95]:
+              - generic [ref=e96]: 1 pieces
+              - generic "Roll and turn controls" [ref=e97]:
+                - button "Roll Dice" [ref=e98] [cursor=pointer]
+                - button "End My Turn" [ref=e99] [cursor=pointer]
+          - generic [ref=e162]:
+            - generic [ref=e163]: Azure Small
+            - generic [ref=e164]: x1
+    - complementary [ref=e102]:
+      - generic [ref=e103]:
+        - generic [ref=e105]:
+          - paragraph [ref=e106]: Vaults
+          - heading "Who is close to winning?" [level=3] [ref=e107]
+        - generic [ref=e108]:
+          - article [ref=e109]:
+            - generic [ref=e110]:
+              - generic [ref=e111]:
+                - paragraph [ref=e112]: Taking the turn
+                - heading "Player 1" [level=4] [ref=e113]
+              - generic [ref=e114]:
+                - generic [ref=e115]: 0/3 trios
+                - generic [ref=e116]: 0 pieces
+            - generic [ref=e119]: 0 of 3 trios
+            - generic [ref=e121]: No pyramids here yet.
+          - article [ref=e122]:
+            - generic [ref=e123]:
+              - generic [ref=e124]:
+                - paragraph [ref=e125]: Player 2
+                - heading "Player 2" [level=4] [ref=e126]
+              - generic [ref=e127]:
+                - generic [ref=e128]: 0/3 trios
+                - generic [ref=e129]: 0 pieces
+            - generic [ref=e132]: 0 of 3 trios
+            - generic [ref=e134]: No pyramids here yet.
+      - generic [ref=e135]:
+        - generic [ref=e137]:
+          - paragraph [ref=e138]: Turn Log
+          - heading "What just happened" [level=3] [ref=e139]
+        - generic [ref=e140]:
+          - paragraph [ref=e141]: Player 1 placed azure small from the Bank onto the Counter.
+          - list [ref=e142]:
+            - listitem [ref=e165]: Player 1 placed azure small from the Bank onto the Counter.
+            - listitem [ref=e166]: Player 1 rolled azure / small.
+            - listitem [ref=e143]: Game started with 2 players.
+      - generic [ref=e144]:
+        - generic [ref=e146]:
+          - paragraph [ref=e147]: Rules
+          - heading "Remember the pressure points" [level=3] [ref=e148]
+        - list [ref=e149]:
+          - listitem [ref=e150]: Duplicate colors on the Counter bust the run.
+          - listitem [ref=e151]: Atom lets you pick any color, but dangerous colors still bust.
+          - listitem [ref=e152]: Missing pieces are stolen from an opponent before you touch your own vault.
+          - listitem [ref=e153]: Five colors in one turn cash out immediately and keep your turn.
+          - listitem [ref=e154]: Three trios wins the match.
