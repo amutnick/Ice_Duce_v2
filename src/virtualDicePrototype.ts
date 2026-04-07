@@ -11,14 +11,24 @@ interface FaceAsset {
   url: string;
 }
 
+interface TextureLoadOptions {
+  tintNearBlackTo?: string;
+}
+
 interface VirtualDicePrototypeOptions {
   title?: string;
   subtitle?: string;
+  mode?: 'full' | 'modal';
+  disableGlowEffects?: boolean;
+  backgroundAssetUrl?: string;
+  showInteractiveControls?: boolean;
+  onRollComplete?: (result: { colorFace: ColorFace; sizeFace: SizeFace }) => void;
 }
 
 export interface VirtualDicePrototypeControls {
   root: HTMLElement;
   roll: () => void;
+  rollToFaces: (colorFace: ColorFace, sizeFace: SizeFace) => void;
   dispose: () => void;
 }
 
@@ -62,9 +72,9 @@ const FACE_NORMALS = [
   new THREE.Vector3(0, 0, -1)
 ] as const;
 
-const GATHER_DURATION = 170;
-const TUMBLE_DURATION = 980;
-const SETTLE_DURATION = 420;
+const GATHER_DURATION = 340;
+const TUMBLE_DURATION = 2800;
+const SETTLE_DURATION = 1400;
 const TOTAL_ROLL_DURATION = GATHER_DURATION + TUMBLE_DURATION + SETTLE_DURATION;
 const DICE_RADIUS = 0.88;
 const DICE_EDGE_RADIUS = 0.18;
@@ -162,6 +172,8 @@ const FACE_ORDER = [
   new THREE.Vector3(0, 0, 1),
   new THREE.Vector3(0, 0, -1)
 ] as const;
+const FACE_ALIGN_TOP = new THREE.Vector3(0, 1, 0);
+const FACE_ALIGN_FRONT = new THREE.Vector3(0, 0, 1);
 
 const TEMPS = {
   up: new THREE.Vector3(0, 1, 0),
@@ -187,6 +199,14 @@ function clamp01(value: number): number {
 function easeOutCubic(t: number): number {
   const x = clamp01(t);
   return 1 - Math.pow(1 - x, 3);
+}
+
+function easeInOutCubic(t: number): number {
+  const x = clamp01(t);
+  if (x < 0.5) {
+    return 4 * x * x * x;
+  }
+  return 1 - Math.pow(-2 * x + 2, 3) / 2;
 }
 
 function easeOutBack(t: number): number {
@@ -243,7 +263,7 @@ function createFallbackTexture(label: string, tint: string): THREE.CanvasTexture
   return texture;
 }
 
-function loadTexture(url: string): Promise<THREE.Texture> {
+function loadTexture(url: string, options: TextureLoadOptions = {}): Promise<THREE.Texture> {
   return new Promise((resolve, reject) => {
     const image = new Image();
     image.decoding = 'async';
@@ -261,6 +281,32 @@ function loadTexture(url: string): Promise<THREE.Texture> {
       context.fillRect(0, 0, canvas.width, canvas.height);
       context.drawImage(image, 0, 0, canvas.width, canvas.height);
 
+      if (options.tintNearBlackTo) {
+        const tint = new THREE.Color(options.tintNearBlackTo);
+        const tintR = Math.round(tint.r * 255);
+        const tintG = Math.round(tint.g * 255);
+        const tintB = Math.round(tint.b * 255);
+        const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
+        const pixels = imageData.data;
+        for (let i = 0; i < pixels.length; i += 4) {
+          const alpha = pixels[i + 3] ?? 0;
+          if (alpha < 16) {
+            continue;
+          }
+          const r = pixels[i] ?? 0;
+          const g = pixels[i + 1] ?? 0;
+          const b = pixels[i + 2] ?? 0;
+          const nearBlack = r < 56 && g < 56 && b < 56;
+          if (!nearBlack) {
+            continue;
+          }
+          pixels[i] = tintR;
+          pixels[i + 1] = tintG;
+          pixels[i + 2] = tintB;
+        }
+        context.putImageData(imageData, 0, 0);
+      }
+
       const texture = new THREE.CanvasTexture(canvas);
       texture.colorSpace = THREE.SRGBColorSpace;
       texture.needsUpdate = true;
@@ -273,7 +319,18 @@ function loadTexture(url: string): Promise<THREE.Texture> {
   });
 }
 
-function buildOverlayStyle(): HTMLStyleElement {
+function buildOverlayStyle(backgroundAssetUrl?: string): HTMLStyleElement {
+  const modalBackground = backgroundAssetUrl
+    ? `background:
+        linear-gradient(160deg, rgba(36, 105, 148, 0.16), rgba(28, 84, 122, 0.18)),
+        url('${backgroundAssetUrl}');
+      background-size: cover, cover;
+      background-position: center center, center center;`
+    : `background:
+        radial-gradient(circle at 50% 32%, rgba(98, 214, 255, 0.08), transparent 28%),
+        radial-gradient(circle at 22% 76%, rgba(255, 211, 109, 0.09), transparent 24%),
+        linear-gradient(180deg, rgba(8, 17, 31, 0.88), rgba(5, 10, 20, 0.96));`;
+
   const style = document.createElement('style');
   style.textContent = `
     body.virtual-dice-page {
@@ -368,10 +425,7 @@ function buildOverlayStyle(): HTMLStyleElement {
       border-radius: 32px;
       overflow: hidden;
       border: 1px solid rgba(153, 185, 225, 0.16);
-      background:
-        radial-gradient(circle at 50% 32%, rgba(98, 214, 255, 0.08), transparent 28%),
-        radial-gradient(circle at 22% 76%, rgba(255, 211, 109, 0.09), transparent 24%),
-        linear-gradient(180deg, rgba(8, 17, 31, 0.88), rgba(5, 10, 20, 0.96));
+      ${modalBackground}
       box-shadow:
         inset 0 1px 0 rgba(255, 255, 255, 0.04),
         0 30px 60px rgba(0, 0, 0, 0.38);
@@ -516,6 +570,46 @@ function buildOverlayStyle(): HTMLStyleElement {
         width: 100%;
       }
     }
+
+    .vdp-root.vdp-modal .vdp-shell {
+      padding: 0;
+      gap: 0;
+      min-height: 100%;
+      width: 100%;
+    }
+
+    .vdp-root.vdp-modal {
+      width: 100%;
+      min-height: 100%;
+    }
+
+    .vdp-root.vdp-modal .vdp-header {
+      display: none;
+    }
+
+    .vdp-root.vdp-modal .vdp-stage {
+      width: 100%;
+      min-height: clamp(300px, 52vh, 460px);
+      border-radius: 24px;
+      border: 1px solid rgba(222, 244, 252, 0.72);
+      box-shadow: none;
+    }
+
+    .vdp-root.vdp-modal .vdp-canvas {
+      transform: translateY(-64px);
+    }
+
+    .vdp-root.vdp-modal .vdp-overlay {
+      display: none;
+    }
+
+    .vdp-root.vdp-modal .vdp-panel {
+      width: min(560px, 100%);
+      max-width: none;
+      background: rgba(125, 188, 224, 0.28);
+      border: 1px solid rgba(206, 238, 252, 0.65);
+      box-shadow: none;
+    }
   `;
   return style;
 }
@@ -632,14 +726,19 @@ function createDie(kind: DieKind, accent: string, faceTextures: THREE.Texture[])
   };
 }
 
-function buildTargetQuaternion(faceIndex: number, twistRadians: number): THREE.Quaternion {
+function buildTargetQuaternion(
+  faceIndex: number,
+  twistRadians: number,
+  alignTo: THREE.Vector3 = FACE_ALIGN_TOP
+): THREE.Quaternion {
   const normal = FACE_ORDER[assertFaceIndex(faceIndex, FACE_ORDER.length)];
   if (!normal) {
     return new THREE.Quaternion();
   }
 
-  const align = TEMPS.quatA.setFromUnitVectors(normal, TEMPS.up);
-  const twist = TEMPS.quatB.setFromAxisAngle(TEMPS.up, twistRadians);
+  const targetNormal = TEMPS.axis.copy(alignTo).normalize();
+  const align = TEMPS.quatA.setFromUnitVectors(normal, targetNormal);
+  const twist = TEMPS.quatB.setFromAxisAngle(targetNormal, twistRadians);
   return TEMPS.quatC.copy(twist).multiply(align);
 }
 
@@ -674,15 +773,36 @@ function applyMaterialsToDie(
   });
 }
 
+function setFaceEmphasis(die: DieRuntime, targetFaceIndex: number, emphasize: boolean): void {
+  die.materials.forEach((material, index) => {
+    if (!emphasize) {
+      material.color.set('#ffffff');
+      return;
+    }
+    if (index === assertFaceIndex(targetFaceIndex, die.materials.length)) {
+      material.color.set('#ffffff');
+    } else {
+      material.color.set('#c6cfda');
+    }
+  });
+}
+
 export function createVirtualDicePrototype(
   container: HTMLElement,
   options: VirtualDicePrototypeOptions = {}
 ): VirtualDicePrototypeControls {
+  const modalMode = options.mode === 'modal';
+  const showInteractiveControls = options.showInteractiveControls ?? !modalMode;
+  const disableGlowEffects = options.disableGlowEffects ?? modalMode;
+
   const root = document.createElement('div');
   root.className = 'vdp-root';
+  if (modalMode) {
+    root.classList.add('vdp-modal');
+  }
   container.replaceChildren(root);
 
-  const style = buildOverlayStyle();
+  const style = buildOverlayStyle(options.backgroundAssetUrl);
   document.head.append(style);
 
   const shell = document.createElement('div');
@@ -753,6 +873,9 @@ export function createVirtualDicePrototype(
   randomizeButton.type = 'button';
   randomizeButton.textContent = 'Nudge Camera';
   actions.append(rollButton, randomizeButton);
+  if (!showInteractiveControls) {
+    actions.style.display = 'none';
+  }
 
   const note = document.createElement('div');
   note.className = 'vdp-note';
@@ -780,73 +903,82 @@ export function createVirtualDicePrototype(
 
   const scene = new THREE.Scene();
   const camera = new THREE.PerspectiveCamera(34, 1, 0.1, 100);
-  camera.position.set(0, 4.15, 8.65);
-  camera.lookAt(0, 0.9, 0);
+  if (modalMode) {
+    camera.fov = 44;
+    camera.position.set(0, 5.1, 6.6);
+    camera.lookAt(0, 3.45, 0);
+    camera.updateProjectionMatrix();
+  } else {
+    camera.position.set(0, 4.15, 8.65);
+    camera.lookAt(0, 0.9, 0);
+  }
 
-  const ambient = new THREE.AmbientLight(0x8fb4ff, 1.15);
+  const ambient = new THREE.AmbientLight(0x8fb4ff, modalMode ? 1.45 : 1.15);
   scene.add(ambient);
 
-  const hemisphere = new THREE.HemisphereLight(0xdff3ff, 0x101a30, 1.4);
+  const hemisphere = new THREE.HemisphereLight(0xdff3ff, modalMode ? 0x8fb6d3 : 0x101a30, modalMode ? 1.55 : 1.4);
   hemisphere.position.set(0, 10, 0);
   scene.add(hemisphere);
 
-  const keyLight = new THREE.DirectionalLight(0xffffff, 2.2);
+  const keyLight = new THREE.DirectionalLight(0xffffff, modalMode ? 2.4 : 2.2);
   keyLight.position.set(-4, 8, 6);
   keyLight.castShadow = true;
   keyLight.shadow.mapSize.set(1024, 1024);
   scene.add(keyLight);
 
-  const fillLight = new THREE.DirectionalLight(0x6fe1ff, 0.9);
+  const fillLight = new THREE.DirectionalLight(0x6fe1ff, modalMode ? 1.2 : 0.9);
   fillLight.position.set(4, 3, -2);
   scene.add(fillLight);
 
-  const spot = new THREE.SpotLight(0xf6d98a, 4.2, 24, Math.PI / 5, 0.38, 1.6);
+  const spot = new THREE.SpotLight(0xf6d98a, modalMode ? 2.6 : 4.2, 24, Math.PI / 5, 0.38, 1.6);
   spot.position.set(0, 8.5, 2.6);
   spot.target.position.set(0, 0.7, 0);
   spot.castShadow = false;
   scene.add(spot, spot.target);
 
-  const table = new THREE.Mesh(
-    new THREE.CylinderGeometry(6.5, 7.2, 0.6, 48),
-    new THREE.MeshStandardMaterial({
-      color: 0x081220,
-      roughness: 0.98,
-      metalness: 0.04
-    })
-  );
-  table.position.y = -1.3;
-  table.receiveShadow = true;
-  scene.add(table);
+  if (!modalMode) {
+    const table = new THREE.Mesh(
+      new THREE.CylinderGeometry(6.5, 7.2, 0.6, 48),
+      new THREE.MeshStandardMaterial({
+        color: 0x081220,
+        roughness: 0.98,
+        metalness: 0.04
+      })
+    );
+    table.position.y = -1.3;
+    table.receiveShadow = true;
+    scene.add(table);
 
-  const tableTop = new THREE.Mesh(
-    new THREE.CircleGeometry(6.4, 64),
-    new THREE.MeshStandardMaterial({
-      color: 0x0f1f37,
-      roughness: 0.92,
-      metalness: 0.05,
-      transparent: true,
-      opacity: 0.95
-    })
-  );
-  tableTop.rotation.x = -Math.PI / 2;
-  tableTop.position.y = -1.0;
-  scene.add(tableTop);
+    const tableTop = new THREE.Mesh(
+      new THREE.CircleGeometry(6.4, 64),
+      new THREE.MeshStandardMaterial({
+        color: 0x0f1f37,
+        roughness: 0.92,
+        metalness: 0.05,
+        transparent: true,
+        opacity: 0.95
+      })
+    );
+    tableTop.rotation.x = -Math.PI / 2;
+    tableTop.position.y = -1.0;
+    scene.add(tableTop);
 
-  const grid = new THREE.GridHelper(11, 18, 0x35547f, 0x1a2f4f);
-  const gridMaterial = grid.material;
-  if (Array.isArray(gridMaterial)) {
-    gridMaterial.forEach((material) => {
-      const lineMaterial = material as THREE.LineBasicMaterial;
+    const grid = new THREE.GridHelper(11, 18, 0x35547f, 0x1a2f4f);
+    const gridMaterial = grid.material;
+    if (Array.isArray(gridMaterial)) {
+      gridMaterial.forEach((material) => {
+        const lineMaterial = material as THREE.LineBasicMaterial;
+        lineMaterial.opacity = 0.18;
+        lineMaterial.transparent = true;
+      });
+    } else {
+      const lineMaterial = gridMaterial as THREE.LineBasicMaterial;
       lineMaterial.opacity = 0.18;
       lineMaterial.transparent = true;
-    });
-  } else {
-    const lineMaterial = gridMaterial as THREE.LineBasicMaterial;
-    lineMaterial.opacity = 0.18;
-    lineMaterial.transparent = true;
+    }
+    grid.position.y = -0.99;
+    scene.add(grid);
   }
-  grid.position.y = -0.99;
-  scene.add(grid);
 
   let colorDieTextures: THREE.Texture[] = COLOR_FACE_REGISTRY.map((entry) =>
     createFallbackTexture(entry.label, '#5ad8ff')
@@ -858,10 +990,30 @@ export function createVirtualDicePrototype(
   const colorDie = createDie('color', '#6fe1ff', colorDieTextures);
   const sizeDie = createDie('size', '#f5d46d', sizeDieTextures);
 
-  colorDie.basePosition.set(-1.55, 0.98, 0.0);
-  colorDie.gatherPosition.set(-1.18, 1.12, -0.2);
-  sizeDie.basePosition.set(1.55, 0.95, 0.08);
-  sizeDie.gatherPosition.set(1.18, 1.15, 0.15);
+  if (disableGlowEffects) {
+    colorDie.glow.visible = false;
+    sizeDie.glow.visible = false;
+    colorDie.edgeLines.visible = false;
+    sizeDie.edgeLines.visible = false;
+    colorDie.shadow.visible = false;
+    sizeDie.shadow.visible = false;
+    (colorDie.shadow.material as THREE.SpriteMaterial).opacity = 0;
+    (sizeDie.shadow.material as THREE.SpriteMaterial).opacity = 0;
+  }
+
+  if (modalMode) {
+    colorDie.basePosition.set(-0.82, 3.35, 0.0);
+    colorDie.gatherPosition.set(-0.56, 3.58, -0.04);
+    sizeDie.basePosition.set(0.82, 3.35, 0.0);
+    sizeDie.gatherPosition.set(0.56, 3.58, 0.04);
+    colorDie.group.scale.setScalar(0.98);
+    sizeDie.group.scale.setScalar(0.98);
+  } else {
+    colorDie.basePosition.set(-1.55, 0.98, 0.0);
+    colorDie.gatherPosition.set(-1.18, 1.12, -0.2);
+    sizeDie.basePosition.set(1.55, 0.95, 0.08);
+    sizeDie.gatherPosition.set(1.18, 1.15, 0.15);
+  }
 
   colorDie.group.position.copy(colorDie.basePosition);
   sizeDie.group.position.copy(sizeDie.basePosition);
@@ -887,6 +1039,8 @@ export function createVirtualDicePrototype(
   let rafId = 0;
   let cameraOrbit = 0;
   const clock = new THREE.Clock();
+  let hasPendingReport = false;
+  let queuedRollTarget: { colorFace?: ColorFace; sizeFace?: SizeFace } | null = null;
 
   const textureLoader = new THREE.TextureLoader();
   function setStatus(nextStatus: string, stage: PrototypeState['phase'], ready = state.ready): void {
@@ -934,30 +1088,40 @@ export function createVirtualDicePrototype(
     rollButton.disabled = !state.ready || state.phase !== 'idle';
   }
 
-  function beginRoll(): void {
-    if (!state.ready || state.phase !== 'idle' || disposed) {
+  function beginRoll(target?: { colorFace?: ColorFace; sizeFace?: SizeFace }): void {
+    if (!state.ready) {
+      queuedRollTarget = target ?? {};
+      return;
+    }
+    if (state.phase !== 'idle' || disposed) {
       return;
     }
 
     state.rollStartedAt = performance.now();
     state.hasRolled = true;
-    state.colorFaceIndex = randomIndex(COLOR_FACE_OPTIONS.length);
-    state.sizeFaceIndex = randomIndex(SIZE_FACES.length);
+    state.colorFaceIndex = target?.colorFace
+      ? Math.max(0, COLOR_FACE_OPTIONS.indexOf(target.colorFace))
+      : randomIndex(COLOR_FACE_OPTIONS.length);
+    state.sizeFaceIndex = target?.sizeFace
+      ? Math.max(0, SIZE_FACES.indexOf(target.sizeFace))
+      : randomIndex(SIZE_FACES.length);
     colorDie.targetFaceIndex = state.colorFaceIndex;
     sizeDie.targetFaceIndex = state.sizeFaceIndex;
 
     colorDie.tumbleAxis.set(1, 0.5, 0.22).normalize();
     sizeDie.tumbleAxis.set(-0.35, 0.65, 0.66).normalize();
-    colorDie.tumbleSpeed = 8 + Math.random() * 3.5;
-    sizeDie.tumbleSpeed = 7.2 + Math.random() * 3.8;
+    colorDie.tumbleSpeed = 6.4 + Math.random() * 2.4;
+    sizeDie.tumbleSpeed = 6 + Math.random() * 2.3;
     colorDie.tumbleTwist = Math.PI / 2 * randomIndex(4);
     sizeDie.tumbleTwist = Math.PI / 2 * randomIndex(4);
 
     transitionTo('gather');
+    hasPendingReport = true;
     colorDie.settleStartQuaternion.copy(colorDie.mesh.quaternion);
     sizeDie.settleStartQuaternion.copy(sizeDie.mesh.quaternion);
-    colorDie.settleQuaternion.copy(buildTargetQuaternion(colorDie.targetFaceIndex, colorDie.tumbleTwist));
-    sizeDie.settleQuaternion.copy(buildTargetQuaternion(sizeDie.targetFaceIndex, sizeDie.tumbleTwist));
+    const settleFaceTarget = modalMode ? FACE_ALIGN_FRONT : FACE_ALIGN_TOP;
+    colorDie.settleQuaternion.copy(buildTargetQuaternion(colorDie.targetFaceIndex, colorDie.tumbleTwist, settleFaceTarget));
+    sizeDie.settleQuaternion.copy(buildTargetQuaternion(sizeDie.targetFaceIndex, sizeDie.tumbleTwist, settleFaceTarget));
     setStatus('Gathering', 'gather');
   }
 
@@ -972,7 +1136,9 @@ export function createVirtualDicePrototype(
 
   const loadAssets = async (): Promise<void> => {
     const colorResults = await Promise.allSettled(COLOR_FACE_REGISTRY.map((entry) => loadTexture(entry.url)));
-    const sizeResults = await Promise.allSettled(SIZE_FACE_REGISTRY.map((entry) => loadTexture(entry.url)));
+    const sizeResults = await Promise.allSettled(
+      SIZE_FACE_REGISTRY.map((entry) => loadTexture(entry.url, { tintNearBlackTo: '#e2384d' }))
+    );
 
     const colorTextures = colorResults.map((result, index) => {
       if (result.status === 'fulfilled') {
@@ -1002,6 +1168,11 @@ export function createVirtualDicePrototype(
     refreshFaceReadout();
     setStatus('Ready to roll', 'idle');
     rollButton.disabled = false;
+    if (queuedRollTarget) {
+      const target = queuedRollTarget;
+      queuedRollTarget = null;
+      beginRoll(target);
+    }
   };
 
   void loadAssets().catch(() => {
@@ -1015,6 +1186,11 @@ export function createVirtualDicePrototype(
     refreshFaceReadout();
     setStatus('Ready with fallback art', 'idle');
     rollButton.disabled = false;
+    if (queuedRollTarget) {
+      const target = queuedRollTarget;
+      queuedRollTarget = null;
+      beginRoll(target);
+    }
   });
 
   function updatePhase(now: number): void {
@@ -1054,6 +1230,12 @@ export function createVirtualDicePrototype(
       sizeDie.group.scale.setScalar(1);
       refreshFaceReadout();
       setStatus('Ready to roll', 'idle');
+      if (hasPendingReport && options.onRollComplete) {
+        const colorFace = COLOR_FACE_OPTIONS[assertFaceIndex(state.colorFaceIndex, COLOR_FACE_OPTIONS.length)] ?? 'azure';
+        const sizeFace = SIZE_FACES[assertFaceIndex(state.sizeFaceIndex, SIZE_FACES.length)] ?? 'small';
+        options.onRollComplete({ colorFace, sizeFace });
+      }
+      hasPendingReport = false;
     }
   }
 
@@ -1081,18 +1263,20 @@ export function createVirtualDicePrototype(
       );
       die.group.position.y += Math.sin(rollElapsed * 0.012 + (die.kind === 'color' ? 0.3 : 1.1)) * 0.12;
       die.group.scale.setScalar(1.08 + Math.sin(rollElapsed * 0.02 + wobble) * 0.03);
+      const decay = 1 - clamp01(tumbleProgress) * 0.82;
+      const dampedSpeed = die.tumbleSpeed * decay * decay + 0.35;
       const spinDelta = new THREE.Quaternion().setFromAxisAngle(
         die.tumbleAxis,
-        die.tumbleSpeed * delta * (1 + Math.sin(rollElapsed * 0.006) * 0.12)
+        dampedSpeed * delta * (1 + Math.sin(rollElapsed * 0.006) * 0.12)
       );
       die.mesh.quaternion.multiply(spinDelta).normalize();
       return;
     }
 
     if (state.phase === 'settle') {
-      const progress = easeOutBack(settleProgress);
+      const progress = easeInOutCubic(settleProgress);
       die.group.position.copy(die.basePosition);
-      die.group.position.y += Math.sin(phaseElapsed * 0.02 + (die.kind === 'color' ? 0.4 : 1.5)) * (1 - progress) * 0.04;
+      die.group.position.y += Math.sin(phaseElapsed * 0.018 + (die.kind === 'color' ? 0.4 : 1.5)) * (1 - progress) * 0.045;
       die.group.scale.setScalar(1.08 - progress * 0.08);
       die.mesh.quaternion.slerpQuaternions(die.settleStartQuaternion, die.settleQuaternion, progress);
       return;
@@ -1112,16 +1296,28 @@ export function createVirtualDicePrototype(
     updateDieTransform(colorDie, now, delta);
     updateDieTransform(sizeDie, now, delta);
 
-    const orbitRadius = 8.65;
-    camera.position.x = Math.sin(cameraOrbit) * 0.45;
-    camera.position.z = orbitRadius + Math.cos(cameraOrbit) * 0.25;
-    camera.lookAt(0, 0.95, 0);
+    const emphasizeSettledFace = modalMode && state.ready && state.hasRolled && state.phase === 'idle';
+    setFaceEmphasis(colorDie, colorDie.targetFaceIndex, emphasizeSettledFace);
+    setFaceEmphasis(sizeDie, sizeDie.targetFaceIndex, emphasizeSettledFace);
 
-    const pulse = state.phase === 'idle' ? 0 : Math.sin(now * 0.012) * 0.18 + 0.18;
-    spot.intensity = 4.2 + pulse * 1.8;
-    keyLight.intensity = 2.2 + pulse * 0.35;
-    fillLight.intensity = 0.9 + pulse * 0.2;
-    ambient.intensity = 1.05 + pulse * 0.15;
+    if (modalMode) {
+      const orbitRadius = 6.6;
+      camera.position.x = Math.sin(cameraOrbit) * 0.08;
+      camera.position.y = 5.1;
+      camera.position.z = orbitRadius;
+      camera.lookAt(0, 3.45, 0);
+    } else {
+      const orbitRadius = 8.65;
+      camera.position.x = Math.sin(cameraOrbit) * 0.45;
+      camera.position.z = orbitRadius + Math.cos(cameraOrbit) * 0.25;
+      camera.lookAt(0, 0.95, 0);
+    }
+
+    const pulse = disableGlowEffects ? 0 : (state.phase === 'idle' ? 0 : Math.sin(now * 0.012) * 0.18 + 0.18);
+    spot.intensity = disableGlowEffects ? 1.9 : 4.2 + pulse * 1.8;
+    keyLight.intensity = disableGlowEffects ? 1.45 : 2.2 + pulse * 0.35;
+    fillLight.intensity = disableGlowEffects ? 0.72 : 0.9 + pulse * 0.2;
+    ambient.intensity = disableGlowEffects ? 0.92 : 1.05 + pulse * 0.15;
 
     meterFill.style.transform = state.phase === 'idle'
       ? 'scaleX(0)'
@@ -1153,17 +1349,20 @@ export function createVirtualDicePrototype(
   resizeObserver.observe(stage);
   resize();
 
+  const rollClickHandler = () => beginRoll();
   const keydownHandler = (event: KeyboardEvent) => {
     if (event.code === 'Space' || event.code === 'Enter') {
       event.preventDefault();
       beginRoll();
     }
   };
-  rollButton.addEventListener('click', beginRoll);
-  randomizeButton.addEventListener('click', nudgeCamera);
-  root.addEventListener('keydown', keydownHandler);
-  root.tabIndex = 0;
-  root.focus();
+  if (showInteractiveControls) {
+    rollButton.addEventListener('click', rollClickHandler);
+    randomizeButton.addEventListener('click', nudgeCamera);
+    root.addEventListener('keydown', keydownHandler);
+    root.tabIndex = 0;
+    root.focus();
+  }
 
   rafId = window.requestAnimationFrame(renderFrame);
 
@@ -1174,9 +1373,11 @@ export function createVirtualDicePrototype(
     disposed = true;
     window.cancelAnimationFrame(rafId);
     resizeObserver.disconnect();
-    rollButton.removeEventListener('click', beginRoll);
-    randomizeButton.removeEventListener('click', nudgeCamera);
-    root.removeEventListener('keydown', keydownHandler);
+    if (showInteractiveControls) {
+      rollButton.removeEventListener('click', rollClickHandler);
+      randomizeButton.removeEventListener('click', nudgeCamera);
+      root.removeEventListener('keydown', keydownHandler);
+    }
 
     allMaterials.forEach((material) => {
       material.map?.dispose();
@@ -1203,7 +1404,8 @@ export function createVirtualDicePrototype(
 
   return {
     root,
-    roll: beginRoll,
+    roll: () => beginRoll(),
+    rollToFaces: (colorFace: ColorFace, sizeFace: SizeFace) => beginRoll({ colorFace, sizeFace }),
     dispose
   };
 }

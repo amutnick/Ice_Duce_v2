@@ -6,11 +6,14 @@ import {
   getPlayerScore,
   getAllowedColors,
   getAllowedSizes,
+  type ColorFace,
+  type SizeFace,
   type GameState,
   type Action,
   type Color,
   type Size
 } from './game/rules';
+import { createVirtualDicePrototype, type VirtualDicePrototypeControls } from './virtualDicePrototype';
 
 // Asset URLs
 const COLOR_FACE_ASSETS: Record<string, string> = {
@@ -216,20 +219,10 @@ function createDiceRollModal(): string {
         <button class="modal-close-btn" id="modalCloseBtn" aria-label="Close modal">×</button>
         <div class="dice-roll-content">
           <p class="label" id="modalLabel">Roll in progress</p>
-          <h3 id="modalTitle">The ice is stirring</h3>
-          <p class="dice-roll-copy" id="modalSubtitle">The dice are gathering frost before they settle.</p>
-          <div class="dice-roll-stage" id="diceRollStage" style="opacity: 0;">
-            <article class="roll-die roll-die-color rolling">
-              <img id="modalColorDie" src="${COLOR_FACE_ASSETS.azure}" alt="" />
-              <span id="modalColorLabel">Azure</span>
-            </article>
-            <article class="roll-die roll-die-size rolling">
-              <img id="modalSizeDie" src="${SIZE_FACE_ASSETS.small}" alt="" />
-              <span id="modalSizeLabel">Small</span>
-            </article>
-          </div>
-          <div class="dice-roll-sparkline" id="diceSparkline">
-            <span></span><span></span><span></span><span></span><span></span><span></span>
+          <h3 id="modalTitle">Rolling the dice...</h3>
+          <p class="dice-roll-copy" id="modalSubtitle">The model window will pause until you confirm a piece.</p>
+          <div class="dice-roll-stage-3d" id="diceRoll3dMount">
+            <div class="dice-roll-loading">Preparing dice model...</div>
           </div>
           <div class="selection-grid" id="selectionGrid" style="display: none;">
             <!-- Pyramid selections go here -->
@@ -330,21 +323,19 @@ function createStyleTag(): HTMLElement {
     .outcome-pending { color: var(--accent-gold); }
     /* Dice roll modal - ICE theme */
     .dice-roll-modal { position: fixed; inset: 0; z-index: 60; display: grid; place-items: center; padding: 16px; }
-    .dice-roll-backdrop { position: absolute; inset: 0; background: radial-gradient(circle at top, rgba(200, 235, 255, 0.4), transparent 36%), radial-gradient(circle at bottom, rgba(255, 255, 255, 0.3), transparent 32%), rgba(200, 230, 255, 0.85); backdrop-filter: blur(12px); }
-    .dice-roll-panel { position: relative; width: min(760px, 100%); min-height: 520px; padding: 0; border-radius: 30px; border: 1px solid var(--ice-accent); background: linear-gradient(180deg, rgba(255, 255, 255, 0.95), rgba(240, 248, 255, 0.98)); box-shadow: 0 28px 84px rgba(0, 80, 140, 0.25), 0 0 0 1px var(--ice-glow); overflow: hidden; }
-    .dice-roll-bg { position: absolute; inset: 0; background-image: url('${BACKGROUND_ASSET}'); background-repeat: no-repeat; background-position: center center; background-size: 85%; opacity: 0.25; pointer-events: none; }
+    .dice-roll-backdrop { position: absolute; inset: 0; background: rgba(182, 220, 241, 0.12); backdrop-filter: blur(2px); }
+    .dice-roll-panel { position: relative; width: min(820px, 100%); min-height: 560px; padding: 0; border-radius: 26px; border: 1px solid rgba(227, 246, 253, 0.82); background: rgba(194, 226, 244, 0.14); box-shadow: none; overflow: hidden; }
+    .dice-roll-bg { position: absolute; inset: 0; background-image: linear-gradient(165deg, rgba(187, 225, 244, 0.08), rgba(175, 216, 238, 0.08)), url('${BACKGROUND_ASSET}'); background-repeat: no-repeat; background-position: center center; background-size: cover; opacity: 1; pointer-events: none; }
     .modal-close-btn { position: absolute; top: 16px; right: 16px; width: 36px; height: 36px; border-radius: 50%; border: none; background: var(--ice-frost); color: var(--text); font-size: 1.4rem; cursor: pointer; z-index: 10; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.1); transition: all 0.2s; }
     .modal-close-btn:hover { background: var(--accent); color: white; transform: scale(1.1); }
-    .dice-roll-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 24px; min-height: 520px; background: radial-gradient(circle at center, rgba(255, 255, 255, 0.9) 0%, rgba(240, 248, 255, 0.95) 60%, rgba(230, 242, 250, 0.98) 100%); }
+    .dice-roll-content { position: relative; z-index: 1; display: flex; flex-direction: column; align-items: center; justify-content: flex-start; padding: 20px; min-height: 560px; gap: 12px; }
     .dice-roll-content .label { margin-bottom: 8px; color: var(--muted); }
     .dice-roll-content h3 { margin: 0 0 10px; font-size: 1.8rem; color: var(--text); }
-    .dice-roll-copy { color: var(--text-muted); max-width: 46ch; text-align: center; margin-bottom: 20px; }
-    .dice-roll-stage { display: grid; grid-template-columns: repeat(2, 1fr); gap: 18px; margin-bottom: 20px; }
-    .roll-die { min-height: 200px; animation: dice-shake 0.15s linear infinite;  padding: 18px; display: grid; place-items: center; border-radius: 26px; border: 1px solid var(--ice-glow); background: radial-gradient(circle at top left, rgba(255, 255, 255, 0.9), rgba(240, 248, 255, 0.8)), linear-gradient(160deg, rgba(255, 255, 255, 0.4), rgba(240, 248, 255, 0.2)); box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.8), 0 8px 24px rgba(0, 60, 100, 0.12); }
-    .roll-die img { width: min(62%, 160px); max-height: 130px; object-fit: contain; filter: drop-shadow(0 8px 12px rgba(0, 0, 0, 0.15)); }
-    .roll-die span { margin-top: 12px; font-family: var(--font-display); letter-spacing: 0.12em; text-transform: uppercase; color: var(--text); font-size: 0.75rem; }
+    .dice-roll-copy { color: rgba(235, 246, 252, 0.96); max-width: 62ch; text-align: center; margin-bottom: 0; text-shadow: 0 1px 2px rgba(8, 30, 50, 0.6); }
+    .dice-roll-stage-3d { width: min(760px, 100%); min-height: 340px; height: 48vh; max-height: 430px; border-radius: 20px; overflow: hidden; border: 1px solid rgba(205, 238, 251, 0.62); background: rgba(179, 216, 235, 0.2); box-shadow: inset 0 1px 0 rgba(241, 250, 255, 0.4); }
+    .dice-roll-loading { width: 100%; height: 100%; display: grid; place-items: center; color: rgba(227, 243, 252, 0.95); font-size: 0.96rem; letter-spacing: 0.05em; text-transform: uppercase; text-shadow: 0 1px 2px rgba(8, 30, 50, 0.65); }
     /* Selection grid */
-    .selection-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 500px; }
+    .selection-grid { display: flex; flex-wrap: wrap; gap: 12px; justify-content: center; max-width: 640px; }
     .selection-btn { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 12px 16px; border-radius: 16px; border: 2px solid var(--ice-glow); background: var(--ice-frost); cursor: pointer; transition: all 0.2s; min-width: 90px; }
     .selection-btn:hover { border-color: var(--accent); background: rgba(98, 214, 255, 0.15); transform: translateY(-2px); box-shadow: 0 6px 16px var(--shadow-frost); }
     .selection-btn.selected { border-color: var(--accent); background: rgba(98, 214, 255, 0.25); box-shadow: 0 0 0 2px var(--accent); }
@@ -368,7 +359,35 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
   let rolling = false;
   let rollTimeout: number | null = null;
   let showModal = false;
+  let modalRollResolved = false;
   let selectedPyramid: { color: ColorKey; size: SizeKey } | null = null;
+  let modalDice: VirtualDicePrototypeControls | null = null;
+
+  function ensureModalDice(): void {
+    const mount = document.getElementById('diceRoll3dMount');
+    if (!mount) {
+      return;
+    }
+    if (modalDice && modalDice.root.parentElement === mount) {
+      return;
+    }
+    if (modalDice) {
+      modalDice.dispose();
+      modalDice = null;
+    }
+
+    modalDice = createVirtualDicePrototype(mount, {
+      mode: 'modal',
+      disableGlowEffects: true,
+      backgroundAssetUrl: BACKGROUND_ASSET,
+      showInteractiveControls: false,
+      onRollComplete: () => {
+        rolling = false;
+        modalRollResolved = true;
+        updateModalContent();
+      }
+    });
+  }
   
   function render(): void {
     const rackRows = COLOR_ORDER.map((color) => renderRackRow(color, gameState.bank)).join('');
@@ -495,6 +514,7 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
     
     // If modal should be showing, update it
     if (showModal) {
+      ensureModalDice();
       updateModalContent();
     }
   }
@@ -502,49 +522,45 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
   function handleRollClick(): void {
     if (gameState.phase !== 'turn' || rolling || showModal) return;
     
+    const action: Action = { type: 'roll' };
+    gameState = applyAction(gameState, action);
+    if (!gameState.pendingRoll) {
+      return;
+    }
+
     rolling = true;
+    modalRollResolved = false;
     selectedPyramid = null;
-    
-    // Show modal immediately with rolling state
+
     showModal = true;
+    render();
     updateModalRolling();
     document.getElementById('diceRollModal')!.style.display = 'grid';
-    
-    if (rollTimeout) clearTimeout(rollTimeout);
-    rollTimeout = window.setTimeout(() => {
-      const action: Action = { type: 'roll' };
-      gameState = applyAction(gameState, action);
-      rolling = false;
-      
-      // Update modal to show selection UI
-      try {
-        updateModalContent();
-        console.log("updateModalContent called successfully");
-      } catch (e) {
-        console.error("Error calling updateModalContent:", e);
-      }
-    }, 1500);
+
+    ensureModalDice();
+    const pending = gameState.pendingRoll;
+    if (pending && modalDice) {
+      modalDice.rollToFaces(pending.colorFace as ColorFace, pending.sizeFace as SizeFace);
+    }
   }
   
   function updateModalRolling(): void {
     const modal = document.getElementById('diceRollModal');
     if (!modal) return;
     
-    const labelEl = modal.querySelector('.label');
-    const titleEl = modal.querySelector('.modal-result-title');
-    const copyEl = modal.querySelector('.dice-roll-copy');
-    const stage = modal.querySelector('.dice-roll-stage');
+    const labelEl = document.getElementById('modalLabel');
+    const titleEl = document.getElementById('modalTitle');
+    const copyEl = document.getElementById('modalSubtitle');
     const selectionGrid = document.getElementById('selectionGrid');
     
     if (labelEl) labelEl.textContent = 'Roll in progress';
-    if (titleEl) titleEl.textContent = 'The ice is stirring';
-    if (copyEl) copyEl.textContent = 'The dice are gathering frost before they settle...';
+    if (titleEl) titleEl.textContent = '3D dice are rolling';
+    if (copyEl) copyEl.textContent = 'The turn is paused until the dice settle and you confirm a piece.';
     
-    // Add rolling animation to dice
-    const dice = stage?.querySelectorAll('.roll-die');
-    dice?.forEach(d => d.classList.add('rolling'));
-    
-    if (selectionGrid) selectionGrid.innerHTML = '';
+    if (selectionGrid) {
+      selectionGrid.style.display = 'none';
+      selectionGrid.innerHTML = '';
+    }
   }
   
   function updateModalContent(): void {
@@ -554,46 +570,27 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
     const pendingRoll = gameState.pendingRoll;
     if (!pendingRoll) return;
 
-    // Update label and title using correct IDs
     const labelEl = document.getElementById('modalLabel');
     const titleEl = document.getElementById('modalTitle');
     const copyEl = document.getElementById('modalSubtitle');
-    const stage = document.getElementById('diceRollStage');
-    const sparkline = document.getElementById('diceSparkline');
+    const selectionGrid = document.getElementById('selectionGrid');
+
+    if (!modalRollResolved || rolling) {
+      if (labelEl) labelEl.textContent = 'Roll in progress';
+      if (titleEl) titleEl.textContent = '3D dice are rolling';
+      if (copyEl) copyEl.textContent = 'Waiting for final faces...';
+      if (selectionGrid) {
+        selectionGrid.style.display = 'none';
+        selectionGrid.innerHTML = '';
+      }
+      return;
+    }
 
     if (labelEl) labelEl.textContent = 'Roll Result';
     if (titleEl) titleEl.textContent = 'Choose Your Pyramid';
-    if (copyEl) copyEl.textContent = 'Select the piece that matches your roll.';
-
-    // Update visual state - hide sparkline, show dice and selection
-    console.log('Updating visual state - sparkline:', !!sparkline, 'stage:', !!stage);
-    if (sparkline) {
-      sparkline.style.display = 'none';
-      console.log('Set sparkline display to none');
+    if (copyEl) {
+      copyEl.textContent = `Rolled: ${formatDiceFace(pendingRoll.colorFace)} / ${formatDiceFace(pendingRoll.sizeFace)}. Select your matching piece.`;
     }
-    if (stage) {
-      stage.style.opacity = '1';
-      console.log('Set stage opacity to 1');
-    }
-
-    // Update dice display - remove rolling animation
-    const dice = stage?.querySelectorAll('.roll-die');
-    dice?.forEach(d => d.classList.remove('rolling'));
-
-    // Update dice images
-    const colorDieImg = document.getElementById('modalColorDie') as HTMLImageElement | null;
-    const sizeDieImg = document.getElementById('modalSizeDie') as HTMLImageElement | null;
-    const colorLabel = document.getElementById('modalColorLabel');
-    const sizeLabel = document.getElementById('modalSizeLabel');
-
-    if (colorDieImg && COLOR_FACE_ASSETS[pendingRoll.colorFace]) {
-      colorDieImg.src = COLOR_FACE_ASSETS[pendingRoll.colorFace] as string;
-    }
-    if (sizeDieImg && SIZE_FACE_ASSETS[pendingRoll.sizeFace]) {
-      sizeDieImg.src = SIZE_FACE_ASSETS[pendingRoll.sizeFace] as string;
-    }
-    if (colorLabel) colorLabel.textContent = formatDiceFace(pendingRoll.colorFace);
-    if (sizeLabel) sizeLabel.textContent = formatDiceFace(pendingRoll.sizeFace);
 
     // Generate selection options
     const allowedColors = getAllowedColors(pendingRoll.colorFace);
@@ -605,7 +602,6 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
     }
 
 
-    const selectionGrid = document.getElementById('selectionGrid');
     if (selectionGrid) {
       // Show selection grid
       selectionGrid.style.display = 'flex';
@@ -663,6 +659,7 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
     gameState = applyAction(gameState, action);
     selectedPyramid = null;
     showModal = false;
+    modalRollResolved = false;
     hideDiceModal();
     render();
   }
@@ -677,6 +674,9 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
   }
 
   function handleCloseModal(): void {
+    if (rolling || gameState.phase === 'choose') {
+      return;
+    }
     showModal = false;
     selectedPyramid = null;
     hideDiceModal();
@@ -698,6 +698,10 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
     dispose() {
       document.body.classList.remove('pyramid-prototype-page');
       if (rollTimeout) clearTimeout(rollTimeout);
+      if (modalDice) {
+        modalDice.dispose();
+        modalDice = null;
+      }
       style.remove();
       root.innerHTML = '';
     }

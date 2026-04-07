@@ -18,6 +18,12 @@ Core behavior currently in place:
 - Counter renders the exact pyramid image that was rolled/selected
 - Vaults render exact pyramid images banked from the counter
 - Turn status and last-roll strips update from live game state
+- Roll flow now opens an embedded 3D dice modal instead of static dice cards
+- Modal keeps the turn paused until dice settle and the player confirms a piece
+- Modal uses the same ice background direction as the main board (no dark surround shell)
+- Dice roll uses slower gather/tumble/settle timing with eased deceleration to a stop
+- Final settled faces are presented for clearer readout in the modal stage
+- Size-die black linework/dot accents are tinted red to match current UI direction
 
 Notes:
 - The previous full React screen (`src/App.tsx`) remains in the repo, but it is no longer the default mounted experience.
@@ -36,6 +42,7 @@ Use the local Vite server to open the standalone experiment pages:
 
 - `Roll Dice` triggers rules action `roll`.
 - Player confirms one allowed color/size option in the roll modal.
+- 3D dice are driven by the exact `pendingRoll` faces from game rules (`rollToFaces`), then pause for confirmation.
 - Confirm triggers `choosePiece`:
   - Matching bank slot decrements (`x2 -> x1 -> x0`).
   - Matching pyramid image appears in Counter.
