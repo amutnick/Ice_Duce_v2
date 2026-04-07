@@ -3,22 +3,25 @@ A tribute to the incredible Ice Dice game by Loony Labs
 
 ## Current Status
 
-This build is a playable browser adaptation with the following pieces in place:
+This build is now locked to the Pyramid Playfield as the default web UI.
 
-- Local hot-seat play for 2 or 3 players
-- LAN host-and-join rooms with invite links, room codes, and QR sharing
-- Responsive table layout with compact-screen breakpoints
-- Turn banners, bust/win feedback, and turn log messaging
-- Per-seat lobby naming in LAN mode
-- Mac launcher scripts for starting and stopping the LAN server
-- Manual background music controls in the header, plus separate sound-effect toggles
-- A bank model that now reflects the physical set: 2 copies of each pyramid piece, 30 total
-- A Roll Dice modal with an icy presentation that returns to the playfield after the roll resolves
-- A dedicated pyramid playfield experiment page for the bank / counter / vault layout
+Core behavior currently in place:
 
-Audio note:
-- Background music now starts only when the player explicitly clicks `Play Music`
-- That manual control is intentional so the browser does not block playback behind autoplay rules
+- Default entry (`src/main.tsx`) mounts the Pyramid Playfield prototype
+- Light icy visual direction using art assets from `art/SVG`
+- Bank/Playfield split layout with tighter rack spacing and expanded vault/counter area
+- Increased UI text contrast and sizing for readability over ice textures
+- Asset-backed row labels and `xN` counters in the bank rack
+- Bank model reflects physical set counts: 2 copies per color-size piece (30 total)
+- Rolling + selection flow is wired into game rules (`applyAction`)
+- Bank counts decrement live when a piece is taken
+- Counter renders the exact pyramid image that was rolled/selected
+- Vaults render exact pyramid images banked from the counter
+- Turn status and last-roll strips update from live game state
+
+Notes:
+- The previous full React screen (`src/App.tsx`) remains in the repo, but it is no longer the default mounted experience.
+- Mac launcher scripts (`Launch Ice Dice.command` / `Stop Ice Dice.command`) still work for local server start/stop.
 
 ## Prototype Pages
 
@@ -27,7 +30,18 @@ Use the local Vite server to open the standalone experiment pages:
 - `http://127.0.0.1:4173/dice-prototype.html`
 - `http://127.0.0.1:4173/pyramid-playfield.html`
 
-These pages are meant for layout and presentation experiments while we keep the main game playable.
+`pyramid-playfield.html` mirrors the same Pyramid Playfield direction now used by default.
+
+## Mechanics Mapping (Current)
+
+- `Roll Dice` triggers rules action `roll`.
+- Player confirms one allowed color/size option in the roll modal.
+- Confirm triggers `choosePiece`:
+  - Matching bank slot decrements (`x2 -> x1 -> x0`).
+  - Matching pyramid image appears in Counter.
+- `End Turn` triggers `stopTurn`:
+  - Counter pieces bank into the active player Vault.
+  - Vault shows the same pyramid images moved from Counter.
 
 ## Mac Launcher
 
