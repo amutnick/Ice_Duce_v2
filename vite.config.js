@@ -10,9 +10,7 @@ export default defineConfig({
     build: {
         rollupOptions: {
             input: {
-                main: resolve(rootDir, 'index.html'),
-                dicePrototype: resolve(rootDir, 'dice-prototype.html'),
-                pyramidPlayfield: resolve(rootDir, 'pyramid-playfield.html')
+                main: resolve(rootDir, 'index.html')
             }
         }
     }
