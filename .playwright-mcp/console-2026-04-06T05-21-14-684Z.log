@@ -1,0 +1,6 @@
+[      96ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/favicon.ico:0
+[   90365ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775452964875:0
+[  101677ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775452976231:0
+[  117738ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775452992300:0
+[  132324ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775453006887:0
+[  142554ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775453017118:0

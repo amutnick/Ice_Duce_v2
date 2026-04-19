@@ -1,0 +1,4 @@
+[      86ms] [ERROR] Failed to load resource: the server responded with a status of 404 (Not Found) @ http://localhost:5173/favicon.ico:0
+[   93222ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775446359715:0
+[  130838ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775446397357:0
+[  150970ms] Identifier 'bottomVault' has already been declared

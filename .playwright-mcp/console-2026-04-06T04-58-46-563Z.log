@@ -1,0 +1,17 @@
+[    4962ms] [LOG] updateModalContent called successfully @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451515835:497
+[   45325ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451571619:0
+[   62893ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451589335:0
+[   81384ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451607805:0
+[   95729ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451622168:0
+[  110091ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451636507:0
+[  125287ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451651723:0
+[  150970ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451677411:0
+[  200777ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451727212:0
+[  251543ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451777979:0
+[  265202ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451791634:0
+[  273633ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451800075:0
+[  291932ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451818377:0
+[  296251ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451822694:0
+[  310996ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451837409:0
+[  323976ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451850414:0
+[  338835ms] [ERROR] Failed to load resource: the server responded with a status of 500 (Internal Server Error) @ http://localhost:5173/src/pyramidPlayfieldPrototype.ts?t=1775451865277:0

@@ -1,0 +1,22 @@
+- generic [ref=e4]:
+  - banner [ref=e5]:
+    - generic [ref=e6]:
+      - paragraph [ref=e7]: Virtual Dice Prototype
+      - heading "Virtual dice, staged for anticipation." [level=1] [ref=e8]
+      - paragraph [ref=e9]: This standalone prototype uses the SVG face art to show how the dice can gather, tumble, and settle before the result is revealed.
+    - generic [ref=e10]:
+      - generic [ref=e11]:
+        - strong [ref=e12]: "Stage:"
+        - generic [ref=e13]: Ready to roll
+      - generic [ref=e14]:
+        - strong [ref=e15]: "Faces:"
+        - generic [ref=e16]: Awaiting first roll
+  - generic [ref=e19]:
+    - heading "Roll the dice" [level=3] [ref=e20]
+    - paragraph [ref=e21]: The dice gather, spin with a little breath-hold tension, then settle into their final symbol and shape.
+    - generic [ref=e23]:
+      - button "Roll Dice" [ref=e24] [cursor=pointer]
+      - button "Nudge Camera" [ref=e25]
+    - generic [ref=e26]:
+      - generic [ref=e27]: Press Space or Enter to roll once the assets are loaded.
+      - generic [ref=e28]: Color / Size

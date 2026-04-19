@@ -1,0 +1,3 @@
+[   34515ms] [LOG] Testing timeout... @ :1
+[   35517ms] [LOG] Timeout fired! @ :3
+[   49469ms] [LOG] Manual update applied @ :21

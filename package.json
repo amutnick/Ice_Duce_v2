@@ -1,0 +1,35 @@
+{
+  "name": "ice-dice-web-game",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview",
+    "test": "vitest run",
+    "serve:lan": "tsx server/server.ts",
+    "launch:mac": "bash scripts/launch-mac.sh",
+    "stop:mac": "bash scripts/stop-mac.sh"
+  },
+  "dependencies": {
+    "qrcode": "^1.5.4",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "three": "^0.183.2",
+    "ws": "^8.18.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "@types/qrcode": "^1.5.5",
+    "@types/react": "^19.0.0",
+    "@types/react-dom": "^19.0.0",
+    "@types/three": "^0.183.1",
+    "@vitejs/plugin-react-swc": "^3.8.0",
+    "playwright": "^1.59.1",
+    "tsx": "^4.20.0",
+    "typescript": "^5.8.0",
+    "vite": "^6.0.0",
+    "vitest": "^2.0.0"
+  }
+}
