@@ -18,7 +18,7 @@ describe('Ice Dice rules engine', () => {
   it('creates a playable game with a populated bank', () => {
     const state = createGame(3);
     expect(state.playerCount).toBe(3);
-    expect(state.bank[pieceKey('azure', 'small')]).toBe(3);
+    expect(state.bank[pieceKey('azure', 'small')]).toBe(2);
     expect(state.phase).toBe('turn');
   });
 

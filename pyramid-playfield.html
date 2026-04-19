@@ -13,13 +13,13 @@
         window.addEventListener('DOMContentLoaded', () => {
           document.body.innerHTML = `
             <style>
-              :root { color-scheme: dark; }
+              :root { color-scheme: light; }
               html, body {
                 margin: 0;
                 min-height: 100%;
-                background: linear-gradient(160deg, #06101d, #0a1b31 55%, #07111f);
-                color: #eef5ff;
-                font-family: 'Trebuchet MS', 'Segoe UI', system-ui, sans-serif;
+                background: linear-gradient(165deg, #eaf7ff 0%, #d9eefb 48%, #cae7f6 100%);
+                color: #102438;
+                font-family: 'Trebuchet MS', 'Segoe UI', sans-serif;
               }
               body {
                 min-height: 100vh;
@@ -31,16 +31,16 @@
                 width: min(860px, 100%);
                 padding: 28px;
                 border-radius: 24px;
-                background: rgba(10, 18, 31, 0.92);
-                border: 1px solid rgba(153, 185, 225, 0.18);
-                box-shadow: 0 22px 60px rgba(0, 0, 0, 0.35);
+                background: rgba(255, 255, 255, 0.88);
+                border: 1px solid rgba(107, 191, 230, 0.35);
+                box-shadow: 0 22px 60px rgba(20, 70, 110, 0.16);
               }
               .kicker {
                 margin: 0 0 10px;
                 letter-spacing: 0.2em;
                 text-transform: uppercase;
                 font-size: 0.72rem;
-                color: rgba(172, 197, 236, 0.78);
+                color: rgba(24, 66, 96, 0.7);
               }
               h1 {
                 margin: 0 0 12px;
@@ -50,12 +50,12 @@
               p {
                 margin: 0 0 14px;
                 line-height: 1.6;
-                color: rgba(216, 227, 247, 0.82);
+                color: rgba(24, 66, 96, 0.8);
               }
               code {
                 padding: 0.16rem 0.35rem;
                 border-radius: 8px;
-                background: rgba(255, 255, 255, 0.08);
+                background: rgba(98, 214, 255, 0.14);
               }
               .hint {
                 display: inline-flex;
@@ -63,11 +63,11 @@
                 padding: 10px 14px;
                 border-radius: 999px;
                 background: linear-gradient(135deg, #6ae0ff, #f5d46d);
-                color: #06101d;
+                color: #0a1f33;
                 font-weight: 700;
               }
               a {
-                color: #8ae6ff;
+                color: #0f80b5;
               }
             </style>
             <div class="card">

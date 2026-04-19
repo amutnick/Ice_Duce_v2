@@ -214,7 +214,9 @@ function createDiceRollModal(): string {
       </div>
     </div>
   `;
-}function createStyleTag(): HTMLElement {
+}
+
+function createStyleTag(): HTMLElement {
   const style = document.createElement('style');
   style.textContent = `
     :root {
@@ -441,7 +443,6 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
     
     // Attach event listeners
     document.getElementById('rollDiceBtn')?.addEventListener('click', handleRollClick);
-  }
     document.getElementById('endTurnBtn')?.addEventListener('click', handleStopClick);
     document.getElementById('modalCloseBtn')?.addEventListener('click', handleCloseModal);
     
@@ -573,6 +574,7 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
             '<span>' + SIZE_LABELS[size as SizeKey] + '</span>' +
             '<span class="selection-label">' + COLOR_LABELS[color as ColorKey] + '</span>' +
             '</button>';
+        }
       }
 
       // Add confirm button
@@ -600,7 +602,9 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
       // Add confirm handler
       document.getElementById('confirmSelectionBtn')?.addEventListener('click', handleConfirmSelection);
     }
-  }  function handleConfirmSelection(): void {
+  }
+
+  function handleConfirmSelection(): void {
     if (!selectedPyramid || !gameState.pendingRoll) return;
     
     const action: Action = {
@@ -622,6 +626,13 @@ export function createPyramidPlayfieldPrototype(root: HTMLElement, options: Pyra
     
     const action: Action = { type: 'stopTurn' };
     gameState = applyAction(gameState, action);
+    render();
+  }
+
+  function handleCloseModal(): void {
+    showModal = false;
+    selectedPyramid = null;
+    hideDiceModal();
     render();
   }
   
